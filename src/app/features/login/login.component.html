@@ -1,0 +1,167 @@
+<main class="login-shell">
+  <section class="brand-panel" aria-label="Estado de plataforma">
+    <div class="brand-mark">
+      <span class="pi pi-shield"></span>
+    </div>
+
+    <div>
+      <p class="eyebrow">IoT Security Console</p>
+      <h1>Control de acceso, sensores y automatizacion</h1>
+    </div>
+
+    <div class="signal-grid" aria-hidden="true">
+      <div class="signal-cell is-live">
+        <span class="pi pi-wifi"></span>
+        <strong>18</strong>
+        <small>Nodos</small>
+      </div>
+      <div class="signal-cell">
+        <span class="pi pi-chart-line"></span>
+        <strong>342</strong>
+        <small>Lecturas</small>
+      </div>
+      <div class="signal-cell is-warning">
+        <span class="pi pi-bell"></span>
+        <strong>7</strong>
+        <small>Alertas</small>
+      </div>
+      <div class="signal-cell">
+        <span class="pi pi-key"></span>
+        <strong>RBAC</strong>
+        <small>Roles</small>
+      </div>
+    </div>
+
+    <div class="access-rule">
+      <span class="pi pi-lock"></span>
+      <div>
+        <strong>Admin</strong>
+        <span>GET, POST, PUT, PATCH, DELETE</span>
+      </div>
+      <div>
+        <strong>Otros roles</strong>
+        <span>Solo lectura</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="auth-panel">
+    <div class="auth-card">
+      <div class="mode-switch" role="tablist" aria-label="Modo de acceso">
+        <button
+          type="button"
+          [class.active]="mode() === 'login'"
+          (click)="switchMode('login')"
+        >
+          Entrar
+        </button>
+        <button
+          type="button"
+          [class.active]="mode() === 'register'"
+          (click)="switchMode('register')"
+        >
+          Nuevo usuario
+        </button>
+      </div>
+
+      <div class="form-heading">
+        <span class="pi" [ngClass]="mode() === 'login' ? 'pi-sign-in' : 'pi-user-plus'"></span>
+        <div>
+          <h2>{{ title() }}</h2>
+          <p>{{ mode() === 'login' ? 'Autenticacion por token Bearer' : 'Registro con rol del backend' }}</p>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="alert">
+          <span class="pi pi-exclamation-circle"></span>
+          <p>{{ error() }}</p>
+        </div>
+      }
+
+      <form (ngSubmit)="submit()" [formGroup]="mode() === 'login' ? loginForm : registerForm">
+        @if (mode() === 'login') {
+          <label>
+            <span>Usuario o correo</span>
+            <input
+              pInputText
+              type="text"
+              formControlName="identifier"
+              autocomplete="username"
+              placeholder="admin o admin@test.com"
+            />
+          </label>
+
+          <label>
+            <span>Contraseña</span>
+            <p-password
+              formControlName="password"
+              [toggleMask]="true"
+              [feedback]="false"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              autocomplete="current-password"
+            />
+          </label>
+        } @else {
+          <div class="field-grid">
+            <label>
+              <span>Hogar</span>
+              <input pInputText type="number" formControlName="home" min="1" />
+            </label>
+            <label>
+              <span>Rol</span>
+              <select formControlName="role">
+                @for (role of roleOptions; track role) {
+                  <option [value]="role">{{ role }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          <label>
+            <span>Nombre completo</span>
+            <input pInputText type="text" formControlName="full_name" autocomplete="name" />
+          </label>
+
+          <label>
+            <span>Username</span>
+            <input pInputText type="text" formControlName="username" autocomplete="username" />
+          </label>
+
+          <label>
+            <span>Correo</span>
+            <input pInputText type="email" formControlName="email" autocomplete="email" />
+          </label>
+
+          <div class="field-grid">
+            <label>
+              <span>Telefono</span>
+              <input pInputText type="tel" formControlName="phone" autocomplete="tel" />
+            </label>
+            <label>
+              <span>Contraseña</span>
+              <p-password
+                formControlName="password"
+                [toggleMask]="true"
+                [feedback]="false"
+                styleClass="w-full"
+                inputStyleClass="w-full"
+                autocomplete="new-password"
+              />
+            </label>
+          </div>
+        }
+
+        <p-button
+          type="submit"
+          [label]="submitLabel()"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          [loading]="loading()"
+          styleClass="w-full justify-center"
+        />
+      </form>
+    </div>
+  </section>
+</main>

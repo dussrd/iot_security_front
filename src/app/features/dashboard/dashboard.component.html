@@ -1,0 +1,314 @@
+<main class="dashboard-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="pi pi-shield"></span>
+      <div>
+        <strong>IoT Security</strong>
+        <small>Admin Console</small>
+      </div>
+    </div>
+
+    <nav aria-label="Modulos">
+      @for (group of groups; track group) {
+        <section>
+          <p>{{ groupLabel(group) }}</p>
+          @for (state of orderedStates(); track state.definition.key) {
+            @if (state.definition.group === group) {
+              <button
+                type="button"
+                [class.active]="selectedKey() === state.definition.key"
+                (click)="selectEndpoint(state.definition.key)"
+              >
+                <span [class]="state.definition.icon"></span>
+                <span>{{ state.definition.label }}</span>
+                <strong>{{ state.records.length }}</strong>
+              </button>
+            }
+          }
+        </section>
+      }
+    </nav>
+  </aside>
+
+  <section class="workspace">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Panel operativo</p>
+        <h1>Registros y seguridad IoT</h1>
+      </div>
+
+      <div class="user-strip">
+        <p-tag
+          [severity]="auth.isAdmin() ? 'success' : 'info'"
+          [value]="auth.isAdmin() ? 'Admin' : 'Solo lectura'"
+        />
+        <div class="avatar">{{ auth.user()?.username?.slice(0, 2)?.toUpperCase() || 'US' }}</div>
+        <div>
+          <strong>{{ auth.user()?.full_name || auth.user()?.username }}</strong>
+          <span>{{ auth.user()?.email }}</span>
+        </div>
+        <p-button icon="pi pi-sign-out" [text]="true" severity="secondary" (click)="logout()" />
+      </div>
+    </header>
+
+    <section class="metric-grid" aria-label="Metricas principales">
+      @for (metric of metrics(); track metric.label) {
+        <article class="metric-card" [attr.data-tone]="metric.tone">
+          <div>
+            <span [class]="metric.icon"></span>
+            <small>{{ metric.hint }}</small>
+          </div>
+          <strong>{{ metric.value }}</strong>
+          <p>{{ metric.label }}</p>
+        </article>
+      }
+    </section>
+
+    <section class="insight-grid">
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Distribucion de datos</h2>
+            <p>{{ orderedStates().length }} recursos conectados</p>
+          </div>
+          <p-button
+            icon="pi pi-refresh"
+            label="Recargar"
+            size="small"
+            [loading]="loadingAll()"
+            (click)="loadAll()"
+          />
+        </div>
+
+        <div class="bar-list">
+          @for (bar of groupBars(); track bar.key) {
+            <div class="bar-row">
+              <span>{{ bar.label }}</span>
+              <div>
+                <i [style.width]="bar.width"></i>
+              </div>
+              <strong>{{ bar.value }}</strong>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="panel activity-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Actividad reciente</h2>
+            <p>Alertas, comandos y auditoria</p>
+          </div>
+        </div>
+
+        <div class="activity-list">
+          @if (activity().length) {
+            @for (item of activity(); track item.label + item.title + item.time) {
+              <div class="activity-item">
+                <span [class]="item.icon"></span>
+                <div>
+                  <strong>{{ item.label }} · {{ item.title }}</strong>
+                  <p>{{ item.subtitle }}</p>
+                </div>
+                <time>{{ item.time ? (item.time | date: 'short') : 'Sin fecha' }}</time>
+              </div>
+            }
+          } @else {
+            <div class="empty-state">
+              <span class="pi pi-inbox"></span>
+              <p>No hay actividad disponible</p>
+            </div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="records-panel">
+      <div class="records-header">
+        <div class="resource-title">
+          <span [class]="selectedDefinition().icon"></span>
+          <div>
+            <h2>{{ selectedDefinition().label }}</h2>
+            <p>{{ selectedDefinition().description }}</p>
+          </div>
+        </div>
+
+        <div class="records-actions">
+          <span class="search-box">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="search"
+              placeholder="Buscar registros"
+              [ngModel]="search()"
+              (ngModelChange)="search.set($event)"
+            />
+          </span>
+          <p-button icon="pi pi-refresh" [outlined]="true" (click)="refreshSelected()" />
+          @if (auth.isAdmin()) {
+            <p-button icon="pi pi-plus" label="Nuevo" (click)="openCreate()" />
+          }
+        </div>
+      </div>
+
+      @if (actionMessage()) {
+        <div class="inline-status success">
+          <span class="pi pi-check-circle"></span>
+          <p>{{ actionMessage() }}</p>
+        </div>
+      }
+
+      @if (actionError()) {
+        <div class="inline-status danger">
+          <span class="pi pi-exclamation-circle"></span>
+          <p>{{ actionError() }}</p>
+        </div>
+      }
+
+      @if (selectedState().loading) {
+        <div class="loading-state">
+          <p-progress-spinner ariaLabel="Cargando registros" />
+        </div>
+      } @else if (selectedState().error) {
+        <div class="error-state">
+          <span class="pi pi-wifi"></span>
+          <h3>{{ selectedState().error }}</h3>
+          <p-button label="Reintentar" icon="pi pi-refresh" (click)="refreshSelected()" />
+        </div>
+      } @else if (filteredRecords().length) {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                @for (column of columns(); track column) {
+                  <th>{{ fieldLabel(column) }}</th>
+                }
+                @if (auth.isAdmin()) {
+                  <th class="actions-col">Acciones</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (record of filteredRecords(); track recordId(record)) {
+                <tr>
+                  @for (column of columns(); track column) {
+                    <td>
+                      @if (isDateLike(record[column])) {
+                        {{ dateValue(record[column]) | date: 'short' }}
+                      } @else {
+                        <span [title]="displayCell(record, column)">{{ displayCell(record, column) }}</span>
+                      }
+                    </td>
+                  }
+                  @if (auth.isAdmin()) {
+                    <td class="actions-col">
+                      @if (pendingDelete === record) {
+                        <div class="confirm-strip">
+                          <button type="button" (click)="confirmDelete()">Eliminar</button>
+                          <button type="button" (click)="cancelDelete()">Cancelar</button>
+                        </div>
+                      } @else {
+                        <p-button icon="pi pi-pencil" [text]="true" (click)="openEdit(record)" />
+                        <p-button
+                          icon="pi pi-trash"
+                          [text]="true"
+                          severity="danger"
+                          (click)="requestDelete(record)"
+                        />
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty-state table-empty">
+          <span class="pi pi-database"></span>
+          <p>No hay registros para mostrar</p>
+        </div>
+      }
+    </section>
+  </section>
+</main>
+
+<p-dialog
+  [(visible)]="editorVisible"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(92vw, 720px)' }"
+  [header]="editorMode === 'create' ? 'Nuevo registro' : 'Editar registro'"
+>
+  <div class="editor-body">
+    <form class="editor-form" (ngSubmit)="saveForm()">
+      @for (field of formFields(); track field.key) {
+        <label [class.full-field]="field.full || field.type === 'textarea' || field.type === 'json'">
+          <span>
+            {{ field.label }}
+            @if (isRequired(field)) {
+              <i>*</i>
+            }
+          </span>
+
+          @if (field.type === 'select' && field.relation) {
+            <select [(ngModel)]="editorForm[field.key]" [name]="field.key">
+              @if (!field.required) {
+                <option value="">Sin asignar</option>
+              }
+              @for (option of relationOptions(field); track recordId(option)) {
+                <option [value]="recordId(option)">{{ relationOptionsLabel(field, option) }}</option>
+              }
+            </select>
+          } @else if (field.type === 'select') {
+            <select [(ngModel)]="editorForm[field.key]" [name]="field.key">
+              @for (option of field.options ?? []; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          } @else if (field.type === 'checkbox') {
+            <div class="check-field">
+              <input type="checkbox" [(ngModel)]="editorForm[field.key]" [name]="field.key" />
+              <span>{{ editorForm[field.key] ? 'Si' : 'No' }}</span>
+            </div>
+          } @else if (field.type === 'textarea' || field.type === 'json') {
+            <textarea
+              [(ngModel)]="editorForm[field.key]"
+              [name]="field.key"
+              [spellcheck]="field.type !== 'json'"
+              [class.code-input]="field.type === 'json'"
+            ></textarea>
+          } @else {
+            <input
+              pInputText
+              [type]="fieldInputType(field)"
+              [(ngModel)]="editorForm[field.key]"
+              [name]="field.key"
+            />
+          }
+
+          @if (editorFieldErrors[field.key]) {
+            <small>{{ editorFieldErrors[field.key] }}</small>
+          }
+        </label>
+      }
+    </form>
+
+    @if (editorError) {
+      <div class="inline-status danger">
+        <span class="pi pi-exclamation-circle"></span>
+        <p>{{ editorError }}</p>
+      </div>
+    }
+
+    <div class="dialog-actions">
+      <p-button label="Cancelar" [text]="true" severity="secondary" (click)="editorVisible = false" />
+      <p-button
+        label="Guardar"
+        icon="pi pi-check"
+        [loading]="editorSaving"
+        (click)="saveForm()"
+      />
+    </div>
+  </div>
+</p-dialog>
