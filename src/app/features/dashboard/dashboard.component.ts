@@ -27,12 +27,30 @@ type SmartSection =
   | 'scenes'
   | 'settings'
   | 'alerts';
+type AdminSection =
+  | 'home'
+  | 'devices'
+  | 'cameras'
+  | 'automations'
+  | 'history'
+  | 'profile'
+  | 'scenes'
+  | 'settings'
+  | 'alerts'
+  | 'users'
+  | 'system';
 
 interface SmartMenuItem {
   key: SmartSection;
   label: string;
   icon: string;
   roles: string[];
+}
+
+interface AdminMenuItem {
+  key: AdminSection;
+  label: string;
+  icon: string;
 }
 
 interface SmartVisualItem {
@@ -119,8 +137,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
   editorSaving = false;
   editingRecord: ApiRecord | null = null;
   pendingDelete: ApiRecord | null = null;
-  readonly apiReadonlyResources = new Set(['users', 'roles', 'user-roles']);
+  readonly apiReadonlyResources = new Set<string>();
   private clockId: number | null = null;
+
+  readonly adminSection = signal<AdminSection>('home');
+  readonly adminDeviceSearch = signal('');
+  readonly adminMenu: AdminMenuItem[] = [
+    { key: 'home', label: 'Inicio', icon: 'pi pi-home' },
+    { key: 'devices', label: 'Dispositivos', icon: 'pi pi-microchip' },
+    { key: 'cameras', label: 'Camaras', icon: 'pi pi-video' },
+    { key: 'automations', label: 'Automatizaciones', icon: 'pi pi-sync' },
+    { key: 'scenes', label: 'Escenas', icon: 'pi pi-sparkles' },
+    { key: 'history', label: 'Historial', icon: 'pi pi-clock' },
+    { key: 'alerts', label: 'Alertas', icon: 'pi pi-exclamation-triangle' },
+    { key: 'users', label: 'Usuarios', icon: 'pi pi-users' },
+    { key: 'settings', label: 'Configuracion', icon: 'pi pi-cog' },
+    { key: 'system', label: 'Sistema', icon: 'pi pi-server' },
+    { key: 'profile', label: 'Perfil', icon: 'pi pi-user' },
+  ];
 
   readonly smartSection = signal<SmartSection>('home');
   readonly currentTime = signal(new Date());
@@ -252,6 +286,64 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ];
 
   readonly visibleEndpoints = computed(() => ENDPOINTS.filter((endpoint) => this.canViewEndpoint(endpoint)));
+  readonly adminSummaryCards = computed(() => [
+    {
+      label: 'Sistema',
+      value: this.alarmLabel(this.latestAlarm()?.['status']).replace('Sistema ', '') || 'Operativo',
+      detail: this.smartHeader().safe ? 'Todo seguro' : `${this.activeAlerts().length} alertas activas`,
+      icon: 'pi pi-shield',
+      tone: this.smartHeader().safe ? 'green' : 'red',
+    },
+    {
+      label: 'Dispositivos',
+      value: String(this.recordsFor('sensors').length + this.recordsFor('actuators').length + this.recordsFor('nodes').length),
+      detail: `${this.connectedNodes().length} nodos conectados`,
+      icon: 'pi pi-microchip',
+      tone: 'blue',
+    },
+    {
+      label: 'Automatizaciones',
+      value: String(this.activeAutomationCount()),
+      detail: `${this.recordsFor('automation-settings').length} reglas registradas`,
+      icon: 'pi pi-sync',
+      tone: 'violet',
+    },
+    {
+      label: 'Alertas',
+      value: String(this.activeAlerts().length),
+      detail: `${this.criticalAlertCount()} criticas`,
+      icon: 'pi pi-exclamation-triangle',
+      tone: this.activeAlerts().length ? 'amber' : 'green',
+    },
+  ]);
+  readonly adminVisualZones = computed<SmartVisualItem[]>(() => [
+    { label: 'Patio', icon: 'pi pi-directions-run', tone: 'green', position: 'yard', active: true },
+    { label: 'Entrada', icon: 'pi pi-video', tone: 'blue', position: 'entry', active: true },
+    { label: 'Jardin', icon: 'pi pi-lightbulb', tone: 'amber', position: 'living', active: this.lightsOnCount() > 0 },
+    { label: 'Garaje', icon: 'pi pi-car', tone: 'violet', position: 'garage', active: true },
+  ]);
+  readonly adminDeviceCards = computed(() => this.smartDeviceCards());
+  readonly filteredAdminDeviceCards = computed(() => {
+    const query = this.adminDeviceSearch().trim().toLowerCase();
+    const cards = this.adminDeviceCards();
+
+    if (!query) {
+      return cards;
+    }
+
+    return cards.filter((device) =>
+      [device.title, device.subtitle, device.status, device.detail, device.category].join(' ').toLowerCase().includes(query),
+    );
+  });
+  readonly adminUsers = computed(() => this.recordsFor('users'));
+  readonly adminRoles = computed(() => this.recordsFor('roles'));
+  readonly adminSystemResources = computed(() =>
+    ENDPOINTS.map((endpoint) => ({
+      ...endpoint,
+      records: this.states()[endpoint.key]?.records.length ?? 0,
+      error: this.states()[endpoint.key]?.error,
+    })),
+  );
   readonly smartMenuItems = computed(() =>
     this.smartMenu.filter((item) => item.roles.some((role) => this.currentRoles().includes(role))),
   );
@@ -711,6 +803,97 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     return 'Sin rol';
+  }
+
+  selectAdminSection(section: AdminSection): void {
+    this.adminSection.set(section);
+    this.smartNotice.set(null);
+  }
+
+  adminSectionTitle(): string {
+    return this.adminMenu.find((item) => item.key === this.adminSection())?.label ?? 'Inicio';
+  }
+
+  openAdminCreate(endpointKey: string): void {
+    const endpoint = this.endpointByKey(endpointKey);
+
+    if (!endpoint) {
+      this.smartNotice.set('Recurso no disponible.');
+      return;
+    }
+
+    this.selectedKey.set(endpoint.key);
+    this.openCreate();
+  }
+
+  openAdminEdit(endpointKey: string, record: ApiRecord): void {
+    const endpoint = this.endpointByKey(endpointKey);
+
+    if (!endpoint) {
+      this.smartNotice.set('Recurso no disponible.');
+      return;
+    }
+
+    this.selectedKey.set(endpoint.key);
+    this.openEdit(record);
+  }
+
+  deleteAdminRecord(endpointKey: string, record: ApiRecord): void {
+    const endpoint = this.endpointByKey(endpointKey);
+    const id = this.recordId(record);
+
+    if (!endpoint || !id) {
+      this.smartNotice.set('No se pudo identificar el registro.');
+      return;
+    }
+
+    if (!window.confirm('Eliminar este registro de forma permanente?')) {
+      return;
+    }
+
+    this.api.remove(endpoint, id).subscribe({
+      next: () => {
+        this.patchState(endpoint.key, {
+          records: this.recordsFor(endpoint.key).filter((item) => String(item['id']) !== String(id)),
+        });
+        this.smartNotice.set('Registro eliminado.');
+      },
+      error: (error) => this.smartNotice.set(this.extractError(error)),
+    });
+  }
+
+  openDeviceEditor(device: SmartDeviceCard): void {
+    const endpointKey = device.source === 'actuators' ? 'actuators' : device.source === 'sensors' ? 'sensors' : 'nodes';
+    const record = this.recordsFor(endpointKey).find((item) => String(item['id']) === String(device.id));
+
+    if (!record) {
+      this.openDeviceDetails(device);
+      return;
+    }
+
+    this.openAdminEdit(endpointKey, record);
+  }
+
+  deleteDevice(device: SmartDeviceCard): void {
+    const endpointKey = device.source === 'actuators' ? 'actuators' : device.source === 'sensors' ? 'sensors' : 'nodes';
+    const record = this.recordsFor(endpointKey).find((item) => String(item['id']) === String(device.id));
+
+    if (!record) {
+      this.smartNotice.set('Este dispositivo de demostracion no existe en la base de datos.');
+      return;
+    }
+
+    this.deleteAdminRecord(endpointKey, record);
+  }
+
+  runAdminAction(action: string): void {
+    this.smartNotice.set(`${action} solicitado correctamente.`);
+  }
+
+  criticalAlertCount(): number {
+    return this.activeAlerts().filter((alert) =>
+      ['critical', 'high'].includes(String(alert['severity_level'] ?? '').toLowerCase()),
+    ).length;
   }
 
   selectSmartSection(section: SmartSection): void {

@@ -25,6 +25,7 @@ export interface FormFieldDefinition {
 
 export const RESOURCE_FIELDS: Record<string, FormFieldDefinition[]> = {
   homes: [
+    { key: 'owner', label: 'Dueno', type: 'select', relation: 'users' },
     { key: 'home_name', label: 'Nombre', type: 'text', required: true },
     { key: 'address', label: 'Direccion', type: 'text', required: true },
     {
@@ -199,7 +200,6 @@ export const RESOURCE_FIELDS: Record<string, FormFieldDefinition[]> = {
     { key: 'resulting_actuator_status', label: 'Estado resultante', type: 'text' },
   ],
   users: [
-    { key: 'home', label: 'Hogar', type: 'select', relation: 'homes', required: true },
     { key: 'full_name', label: 'Nombre completo', type: 'text', required: true },
     { key: 'username', label: 'Username', type: 'text', required: true },
     { key: 'email', label: 'Correo', type: 'email', required: true },

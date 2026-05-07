@@ -2,7 +2,7 @@ export type ApiRecord = Record<string, unknown>;
 
 export interface AppUser {
   id: number;
-  home: number;
+  home?: number | null;
   full_name: string;
   username: string;
   email: string;

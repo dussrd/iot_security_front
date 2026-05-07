@@ -1,236 +1,396 @@
 @if (auth.isAdmin()) {
-<main class="dashboard-shell">
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <span class="pi pi-shield"></span>
+<main class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="admin-brand">
+      <span class="pi pi-wifi"></span>
       <div>
-        <strong>IoT Security</strong>
-        <small>Admin Console</small>
+        <strong>SmartHome IoT</strong>
+        <small>Administrador</small>
       </div>
     </div>
 
-    <nav aria-label="Modulos">
-      @for (group of visibleGroups(); track group) {
-        <section>
-          <p>{{ groupLabel(group) }}</p>
-          @for (state of orderedStates(); track state.definition.key) {
-            @if (state.definition.group === group) {
-              <button
-                type="button"
-                [class.active]="selectedKey() === state.definition.key"
-                (click)="selectEndpoint(state.definition.key)"
-              >
-                <span [class]="state.definition.icon"></span>
-                <span>{{ state.definition.label }}</span>
-                <strong>{{ state.records.length }}</strong>
-              </button>
-            }
-          }
-        </section>
+    <nav aria-label="Navegacion admin">
+      @for (item of adminMenu; track item.key) {
+        <button
+          type="button"
+          [class.active]="adminSection() === item.key"
+          (click)="selectAdminSection(item.key)"
+        >
+          <span [class]="item.icon"></span>
+          <span>{{ item.label }}</span>
+        </button>
       }
     </nav>
+
+    <div class="admin-profile-pill">
+      <div class="avatar">{{ auth.user()?.username?.slice(0, 2)?.toUpperCase() || 'AD' }}</div>
+      <div>
+        <strong>{{ auth.user()?.full_name || 'Admin' }}</strong>
+        <small>Administrador · En linea</small>
+      </div>
+      <button type="button" (click)="logout()"><span class="pi pi-sign-out"></span></button>
+    </div>
   </aside>
 
-  <section class="workspace">
-    <header class="topbar">
+  <section class="admin-workspace">
+    <header class="admin-topbar">
       <div>
-        <p class="eyebrow">Panel operativo</p>
-        <h1>Registros y seguridad IoT</h1>
+        <p>Panel de control general de la vivienda</p>
+        <h1>{{ adminSection() === 'home' ? 'Bienvenido, Administrador' : adminSectionTitle() }}</h1>
       </div>
 
-      <div class="user-strip">
-        <p-tag
-          [severity]="auth.isAdmin() ? 'success' : 'info'"
-          [value]="currentRoleLabel()"
-        />
-        <div class="avatar">{{ auth.user()?.username?.slice(0, 2)?.toUpperCase() || 'US' }}</div>
+      <div class="admin-status-strip">
         <div>
-          <strong>{{ auth.user()?.full_name || auth.user()?.username }}</strong>
-          <span>{{ auth.user()?.email }}</span>
+          <span class="pi pi-sun"></span>
+          <strong>30C</strong>
+          <small>Riohacha, La Guajira</small>
         </div>
-        <p-button icon="pi pi-sign-out" [text]="true" severity="secondary" (click)="logout()" />
+        <div>
+          <span class="pi pi-wifi"></span>
+          <strong>{{ connectionLabel() }}</strong>
+          <small>Conexion global</small>
+        </div>
+        <button type="button" class="admin-alert-chip" (click)="selectAdminSection('alerts')">
+          <span class="pi pi-bell"></span>
+          <strong>{{ activeAlerts().length }}</strong>
+        </button>
       </div>
     </header>
 
-    <section class="metric-grid" aria-label="Metricas principales">
-      @for (metric of metrics(); track metric.label) {
-        <article class="metric-card" [attr.data-tone]="metric.tone">
-          <div>
-            <span [class]="metric.icon"></span>
-            <small>{{ metric.hint }}</small>
-          </div>
-          <strong>{{ metric.value }}</strong>
-          <p>{{ metric.label }}</p>
-        </article>
-      }
-    </section>
+    @if (smartNotice()) {
+      <div class="smart-notice">
+        <span class="pi pi-info-circle"></span>
+        <p>{{ smartNotice() }}</p>
+      </div>
+    }
 
-    <section class="insight-grid">
-      <article class="panel">
-        <div class="panel-header">
+    @switch (adminSection()) {
+      @case ('home') {
+        <section class="admin-summary-grid">
+          @for (card of adminSummaryCards(); track card.label) {
+            <article class="admin-summary-card" [attr.data-tone]="card.tone">
+              <span [class]="card.icon"></span>
+              <div>
+                <small>{{ card.label }}</small>
+                <strong>{{ card.value }}</strong>
+                <p>{{ card.detail }}</p>
+              </div>
+            </article>
+          }
+        </section>
+
+        <section class="admin-home-grid">
+          <article class="admin-panel admin-map-panel">
+            <div class="admin-panel-head">
+              <div>
+                <h2>Vista general de la casa</h2>
+                <p>Patio, entrada, jardin y garaje con sensores activos</p>
+              </div>
+            </div>
+            <div class="house-visual admin-house">
+              @for (zone of adminVisualZones(); track zone.label) {
+                <button
+                  type="button"
+                  class="map-pin"
+                  [class]="zone.position"
+                  [attr.data-tone]="zone.tone"
+                  (click)="selectAdminSection(zone.label === 'Entrada' ? 'cameras' : 'devices')"
+                >
+                  <span [class]="zone.icon"></span>
+                  <small>{{ zone.label }}</small>
+                </button>
+              }
+            </div>
+          </article>
+
+          <article class="admin-panel">
+            <div class="admin-panel-head">
+              <div>
+                <h2>Actividad en tiempo real</h2>
+                <p>Eventos LIVE del sistema</p>
+              </div>
+            </div>
+            <div class="smart-timeline compact">
+              @for (event of smartHistory().slice(0, 7); track event.title + event.time) {
+                <div class="smart-event" [attr.data-tone]="event.tone">
+                  <span [class]="event.icon"></span>
+                  <div>
+                    <strong>{{ event.title }}</strong>
+                    <p>{{ event.subtitle }} · {{ event.category }}</p>
+                  </div>
+                  <time>{{ event.time ? (event.time | date: 'shortTime') : 'Live' }}</time>
+                </div>
+              }
+            </div>
+            <button type="button" class="full-action" (click)="selectAdminSection('history')">
+              Ver historial completo
+            </button>
+          </article>
+        </section>
+
+        <section class="admin-quick-actions">
+          <button type="button" (click)="setAlarm('armed')"><span class="pi pi-shield"></span>Armar sistema</button>
+          <button type="button" (click)="runAdminAction('Modo noche')"><span class="pi pi-moon"></span>Modo noche</button>
+          <button type="button" (click)="setAllLights('on')"><span class="pi pi-lightbulb"></span>Encender luces</button>
+          <button type="button" (click)="selectAdminSection('scenes')"><span class="pi pi-sparkles"></span>Crear escena</button>
+          <button type="button" (click)="runAdminAction('Reinicio del sistema')"><span class="pi pi-refresh"></span>Reiniciar sistema</button>
+        </section>
+      }
+
+      @case ('devices') {
+        <section class="admin-section-head">
           <div>
-            <h2>Distribucion de datos</h2>
-            <p>{{ orderedStates().length }} recursos conectados</p>
+            <h2>Dispositivos</h2>
+            <p>Gestiona todos los dispositivos conectados</p>
           </div>
-          <p-button
-            icon="pi pi-refresh"
-            label="Recargar"
-            size="small"
-            [loading]="loadingAll()"
-            (click)="loadAll()"
+          <button type="button" (click)="openAdminCreate('nodes')"><span class="pi pi-plus"></span>Nuevo dispositivo</button>
+        </section>
+        <div class="admin-search">
+          <span class="pi pi-search"></span>
+          <input
+            pInputText
+            type="search"
+            placeholder="Buscar por nombre, zona, tipo o estado"
+            [ngModel]="adminDeviceSearch()"
+            (ngModelChange)="adminDeviceSearch.set($event)"
           />
         </div>
-
-        <div class="bar-list">
-          @for (bar of groupBars(); track bar.key) {
-            <div class="bar-row">
-              <span>{{ bar.label }}</span>
+        <section class="admin-device-list">
+          @for (device of filteredAdminDeviceCards(); track device.source + device.id) {
+            <article class="admin-device-row" [attr.data-tone]="device.tone">
+              <span [class]="device.icon"></span>
               <div>
-                <i [style.width]="bar.width"></i>
+                <strong>{{ device.title }}</strong>
+                <p>{{ device.subtitle }} · {{ device.detail }}</p>
               </div>
-              <strong>{{ bar.value }}</strong>
+              <div>
+                <small>Estado</small>
+                <b>{{ device.status }}</b>
+              </div>
+              <div>
+                <small>Tecnico</small>
+                <b>{{ device.online ? 'Online' : 'Offline' }} · {{ device.online ? '42ms' : 'N/A' }}</b>
+              </div>
+              <div class="admin-row-actions">
+                <button type="button" [disabled]="!device.canToggle" (click)="toggleDevice(device)">ON/OFF</button>
+                <button type="button" (click)="restartDevice(device)">Reiniciar</button>
+                <button type="button" (click)="openDeviceEditor(device)">Editar</button>
+                <button type="button" (click)="deleteDevice(device)">Eliminar</button>
+                <button type="button" (click)="runAdminAction('Actualizar firmware de ' + device.title)">Firmware</button>
+              </div>
+            </article>
+          }
+        </section>
+      }
+
+      @case ('cameras') {
+        <section class="admin-section-head">
+          <div>
+            <h2>Camaras</h2>
+            <p>Centro de videovigilancia avanzada</p>
+          </div>
+          <div class="admin-tabs"><span>En vivo</span><span>Grabaciones</span><span>Snapshots</span></div>
+        </section>
+        <section class="admin-camera-grid">
+          @for (camera of cameraCards; track camera.name) {
+            <article class="admin-camera-card" [attr.data-tone]="camera.tone">
+              <div class="camera-frame compact-camera">
+                <span class="camera-badge">{{ camera.name }} · {{ camera.status }}</span>
+              </div>
+              <div>
+                <strong>{{ camera.name }}</strong>
+                <p>{{ camera.detail }} · Senal 92% · 64GB libres</p>
+              </div>
+              <div class="camera-controls">
+                <button type="button" (click)="runAdminAction('Grabar ' + camera.name)"><span class="pi pi-circle-fill"></span></button>
+                <button type="button" (click)="runAdminAction('Captura ' + camera.name)"><span class="pi pi-camera"></span></button>
+                <button type="button" (click)="runAdminAction('Descargar video')"><span class="pi pi-download"></span></button>
+                <button type="button" (click)="runAdminAction('Pantalla completa')"><span class="pi pi-window-maximize"></span></button>
+              </div>
+            </article>
+          }
+        </section>
+      }
+
+      @case ('automations') {
+        <section class="admin-section-head">
+          <div>
+            <h2>Automatizaciones</h2>
+            <p>Crea y gestiona reglas inteligentes</p>
+          </div>
+          <button type="button" (click)="openAdminCreate('automation-settings')"><span class="pi pi-plus"></span>Nueva automatizacion</button>
+        </section>
+        <section class="automation-grid">
+          @for (rule of smartAutomations(); track rule.title) {
+            <article class="automation-card" [class.off]="!rule.active">
+              <div>
+                <span [class]="rule.icon"></span>
+                <button type="button" [class.active]="rule.active" (click)="toggleAutomation(rule)"><i></i></button>
+              </div>
+              <h3>{{ rule.title }}</h3>
+              <p>{{ rule.detail }}</p>
+              <footer><span>{{ rule.schedule }}</span><strong>Prioridad {{ rule.priority }}</strong></footer>
+            </article>
+          }
+        </section>
+      }
+
+      @case ('history') {
+        <section class="admin-section-head">
+          <div>
+            <h2>Historial</h2>
+            <p>Registro tecnico completo del sistema</p>
+          </div>
+          <div class="admin-tabs"><span>Usuario</span><span>Zona</span><span>Severidad</span><span>Fecha</span></div>
+        </section>
+        <section class="history-panel admin-history">
+          @for (event of smartHistory(); track event.title + event.time) {
+            <div class="history-row" [attr.data-tone]="event.tone">
+              <time>{{ event.time ? (event.time | date: 'medium') : 'Sin fecha' }}</time>
+              <span [class]="event.icon"></span>
+              <div>
+                <strong>{{ event.title }}</strong>
+                <p>{{ event.subtitle }} · {{ event.category }} · admin&#64;smarthome.local · 127.0.0.1</p>
+              </div>
             </div>
           }
+        </section>
+        <div class="admin-export-actions">
+          <button type="button" (click)="runAdminAction('Exportar CSV')">Exportar CSV</button>
+          <button type="button" (click)="runAdminAction('Exportar PDF')">Exportar PDF</button>
+          <button type="button" (click)="runAdminAction('Descargar logs')">Descargar logs</button>
         </div>
-      </article>
+      }
 
-      <article class="panel activity-panel">
-        <div class="panel-header">
+      @case ('profile') {
+        <section class="profile-layout">
+          <article class="profile-card admin-profile-card">
+            <div class="profile-avatar">{{ auth.user()?.username?.slice(0, 2)?.toUpperCase() || 'AD' }}</div>
+            <h2>{{ auth.user()?.full_name || 'Administrador' }}</h2>
+            <p>Super Administrador</p>
+            <button type="button" (click)="openProfileEditor()">Editar perfil</button>
+          </article>
+          <article class="profile-details">
+            <div><span>Correo</span><strong>{{ auth.user()?.email }}</strong></div>
+            <div><span>Telefono</span><strong>{{ auth.user()?.phone || 'Sin telefono' }}</strong></div>
+            <div><span>Rol</span><strong>Super Admin</strong></div>
+            <div><span>2FA</span><strong>Disponible</strong></div>
+          </article>
+          <article class="admin-stat-grid">
+            <div><span>Dias activo</span><strong>128</strong></div>
+            <div><span>Accesos</span><strong>347</strong></div>
+            <div><span>Acciones</span><strong>1,248</strong></div>
+            <div><span>Dispositivos</span><strong>{{ adminDeviceCards().length }}</strong></div>
+          </article>
+        </section>
+      }
+
+      @case ('scenes') {
+        <section class="admin-section-head">
           <div>
-            <h2>Actividad reciente</h2>
-            <p>Alertas, comandos y auditoria</p>
+            <h2>Escenas</h2>
+            <p>Controla multiples dispositivos con un solo toque</p>
           </div>
-        </div>
+          <button type="button" (click)="runAdminAction('Nueva escena')"><span class="pi pi-plus"></span>Nueva escena</button>
+        </section>
+        <section class="scene-grid">
+          @for (scene of sceneCards; track scene.name) {
+            <article class="scene-card" [attr.data-tone]="scene.tone">
+              <span [class]="scene.icon"></span>
+              <div><h3>{{ scene.name }}</h3><p>{{ scene.detail }}</p></div>
+              <button type="button" (click)="runAdminAction('Ejecutar escena ' + scene.name)"><span class="pi pi-play"></span></button>
+            </article>
+          }
+        </section>
+      }
 
-        <div class="activity-list">
-          @if (activity().length) {
-            @for (item of activity(); track item.label + item.title + item.time) {
-              <div class="activity-item">
-                <span [class]="item.icon"></span>
-                <div>
-                  <strong>{{ item.label }} · {{ item.title }}</strong>
-                  <p>{{ item.subtitle }}</p>
-                </div>
-                <time>{{ item.time ? (item.time | date: 'short') : 'Sin fecha' }}</time>
-              </div>
+      @case ('settings') {
+        <section class="settings-layout">
+          <div class="settings-list">
+            @for (setting of settingsGroups; track setting.label) {
+              <button type="button" [class.active]="selectedSettingsPanel() === setting.key" (click)="openSettingsPanel(setting.key)">
+                <span [class]="setting.icon"></span>
+                <div><strong>{{ setting.label }}</strong><p>{{ setting.detail }}</p></div>
+                <i class="pi pi-angle-right"></i>
+              </button>
             }
-          } @else {
-            <div class="empty-state">
-              <span class="pi pi-inbox"></span>
-              <p>No hay actividad disponible</p>
-            </div>
-          }
-        </div>
-      </article>
-    </section>
-
-    <section class="records-panel">
-      <div class="records-header">
-        <div class="resource-title">
-          <span [class]="selectedDefinition().icon"></span>
-          <div>
-            <h2>{{ selectedDefinition().label }}</h2>
-            <p>{{ selectedDefinition().description }}</p>
+            <button type="button" (click)="selectAdminSection('users')">
+              <span class="pi pi-users"></span>
+              <div><strong>Usuarios y permisos</strong><p>Gestiona usuarios, roles y accesos</p></div>
+              <i class="pi pi-angle-right"></i>
+            </button>
           </div>
-        </div>
+          <article class="settings-detail">
+            <h2>Configuracion avanzada</h2>
+            <div class="setting-toggle static"><span>MQTT</span><strong>Activo</strong></div>
+            <div class="setting-toggle static"><span>IP local</span><strong>192.168.1.20</strong></div>
+            <div class="setting-toggle static"><span>Backup automatico</span><strong>Diario</strong></div>
+            <div class="setting-toggle static"><span>Firmware</span><strong>v1.0.0</strong></div>
+            <button type="button" class="full-action" (click)="runAdminAction('Sincronizacion nube')">Sincronizar nube</button>
+          </article>
+        </section>
+      }
 
-        <div class="records-actions">
-          <span class="search-box">
-            <i class="pi pi-search"></i>
-            <input
-              pInputText
-              type="search"
-              placeholder="Buscar registros"
-              [ngModel]="search()"
-              (ngModelChange)="search.set($event)"
-            />
-          </span>
-          <p-button icon="pi pi-refresh" [outlined]="true" (click)="refreshSelected()" />
-          @if (canMutateSelected()) {
-            <p-button icon="pi pi-plus" label="Nuevo" (click)="openCreate()" />
+      @case ('alerts') {
+        <section class="alerts-layout">
+          @for (alert of emergencyAlerts(); track alert.id) {
+            <article class="emergency-card" [attr.data-tone]="alert.resolved ? 'green' : alert.tone">
+              <span [class]="alert.icon"></span>
+              <div>
+                <h3>{{ alert.title }}</h3>
+                <p>{{ alert.detail }}</p>
+                <small>{{ alert.zone }} · {{ alert.time ? (alert.time | date: 'short') : 'Sin fecha' }}</small>
+              </div>
+              <div class="alert-actions">
+                <button type="button" (click)="selectAdminSection('cameras')">Ver camara</button>
+                <button type="button" (click)="runAdminAction('Silenciar alarma')">Silenciar</button>
+                <button type="button" [disabled]="alert.resolved" (click)="markAlertRead(alert)">Resolver</button>
+              </div>
+            </article>
           }
-        </div>
-      </div>
-
-      @if (actionMessage()) {
-        <div class="inline-status success">
-          <span class="pi pi-check-circle"></span>
-          <p>{{ actionMessage() }}</p>
-        </div>
+          <button type="button" class="outline-action" (click)="markAllAlertsRead()">Marcar todas como leidas</button>
+        </section>
       }
 
-      @if (actionError()) {
-        <div class="inline-status danger">
-          <span class="pi pi-exclamation-circle"></span>
-          <p>{{ actionError() }}</p>
-        </div>
+      @case ('users') {
+        <section class="admin-section-head">
+          <div>
+            <h2>Usuarios y roles</h2>
+            <p>Gestion total de usuarios autorizados</p>
+          </div>
+          <button type="button" (click)="openAdminCreate('users')"><span class="pi pi-plus"></span>Nuevo usuario</button>
+        </section>
+        <section class="admin-user-list">
+          @for (user of adminUsers(); track recordId(user)) {
+            <article class="admin-user-card">
+              <div class="avatar">{{ displayValue(user['username']).slice(0, 2).toUpperCase() }}</div>
+              <div><strong>{{ displayValue(user['full_name']) }}</strong><p>{{ displayValue(user['email']) }}</p></div>
+              <span>{{ displayValue(user['roles']) }}</span>
+              <button type="button" (click)="openAdminEdit('users', user)">Editar</button>
+            </article>
+          }
+        </section>
       }
 
-      @if (selectedState().loading) {
-        <div class="loading-state">
-          <p-progress-spinner ariaLabel="Cargando registros" />
-        </div>
-      } @else if (selectedState().error) {
-        <div class="error-state">
-          <span class="pi pi-wifi"></span>
-          <h3>{{ selectedState().error }}</h3>
-          <p-button label="Reintentar" icon="pi pi-refresh" (click)="refreshSelected()" />
-        </div>
-      } @else if (filteredRecords().length) {
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                @for (column of columns(); track column) {
-                  <th>{{ fieldLabel(column) }}</th>
-                }
-                @if (canMutateSelected()) {
-                  <th class="actions-col">Acciones</th>
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @for (record of filteredRecords(); track recordId(record)) {
-                <tr>
-                  @for (column of columns(); track column) {
-                    <td>
-                      @if (isDateLike(record[column])) {
-                        {{ dateValue(record[column]) | date: 'short' }}
-                      } @else {
-                        <span [title]="displayCell(record, column)">{{ displayCell(record, column) }}</span>
-                      }
-                    </td>
-                  }
-                  @if (canMutateSelected()) {
-                    <td class="actions-col">
-                      @if (pendingDelete === record) {
-                        <div class="confirm-strip">
-                          <button type="button" (click)="confirmDelete()">Eliminar</button>
-                          <button type="button" (click)="cancelDelete()">Cancelar</button>
-                        </div>
-                      } @else {
-                        <p-button icon="pi pi-pencil" [text]="true" (click)="openEdit(record)" />
-                        <p-button
-                          icon="pi pi-trash"
-                          [text]="true"
-                          severity="danger"
-                          (click)="requestDelete(record)"
-                        />
-                      }
-                    </td>
-                  }
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <div class="empty-state table-empty">
-          <span class="pi pi-database"></span>
-          <p>No hay registros para mostrar</p>
-        </div>
+      @case ('system') {
+        <section class="admin-section-head">
+          <div>
+            <h2>Sistema</h2>
+            <p>Monitoreo tecnico de recursos, API y servidor</p>
+          </div>
+          <button type="button" (click)="loadAll()"><span class="pi pi-refresh"></span>Recargar</button>
+        </section>
+        <section class="admin-system-grid">
+          @for (resource of adminSystemResources(); track resource.key) {
+            <article class="admin-system-card" [class.error]="resource.error">
+              <span [class]="resource.icon"></span>
+              <div><strong>{{ resource.label }}</strong><p>{{ resource.error || 'Operativo' }}</p></div>
+              <b>{{ resource.records }}</b>
+            </article>
+          }
+        </section>
       }
-    </section>
+    }
   </section>
 </main>
 
