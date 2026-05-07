@@ -1315,7 +1315,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.states()[key]?.records.length ?? 0;
   }
 
-  private resolveColumns(records: ApiRecord[]): string[] {
+  resolveColumns(records: ApiRecord[]): string[] {
     const hidden = new Set(['password', 'password_hash', 'recovery_token']);
     const keys = new Set<string>();
 

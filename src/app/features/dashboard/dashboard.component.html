@@ -478,21 +478,34 @@
                 <p>Sin registros. Agrega el primero.</p>
               </div>
             } @else {
-              <div class="sys-records-list">
-                @for (record of recordsFor(systemSelectedKey()!); track recordId(record)) {
-                  <div class="sys-record-row">
-                    <span class="sys-record-id">#{{ recordId(record) }}</span>
-                    <span class="sys-record-label">{{ objectLabel(systemSelectedKey()!, record) }}</span>
-                    <div class="sys-record-btns">
-                      <button type="button" title="Editar" (click)="openAdminEdit(systemSelectedKey()!, record)">
-                        <span class="pi pi-pencil"></span>
-                      </button>
-                      <button type="button" title="Eliminar" class="danger" (click)="deleteAdminRecord(systemSelectedKey()!, record)">
-                        <span class="pi pi-trash"></span>
-                      </button>
-                    </div>
-                  </div>
-                }
+              <div class="sys-table-wrap">
+                <table class="sys-table">
+                  <thead>
+                    <tr>
+                      @for (col of resolveColumns(recordsFor(systemSelectedKey()!)); track col) {
+                        <th>{{ fieldLabel(col) }}</th>
+                      }
+                      <th class="sys-th-actions">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (record of recordsFor(systemSelectedKey()!); track recordId(record)) {
+                      <tr>
+                        @for (col of resolveColumns(recordsFor(systemSelectedKey()!)); track col) {
+                          <td [title]="displayCell(record, col)">{{ displayCell(record, col) }}</td>
+                        }
+                        <td class="sys-record-btns">
+                          <button type="button" title="Editar" (click)="openAdminEdit(systemSelectedKey()!, record)">
+                            <span class="pi pi-pencil"></span>
+                          </button>
+                          <button type="button" title="Eliminar" class="danger" (click)="deleteAdminRecord(systemSelectedKey()!, record)">
+                            <span class="pi pi-trash"></span>
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             }
           </section>
