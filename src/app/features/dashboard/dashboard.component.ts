@@ -907,7 +907,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   runSmartAction(action: string): void {
-    if (!this.currentRoles().includes('operador')) {
+    if (!this.currentRoles().includes('operador') && !this.auth.isAdmin()) {
       this.smartNotice.set('Tu rol lector solo permite visualizar el sistema.');
       return;
     }
@@ -937,7 +937,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.currentRoles().includes('operador')) {
+    if (!this.currentRoles().includes('operador') && !this.auth.isAdmin()) {
       this.smartNotice.set('Tu rol lector puede ver dispositivos, pero no cambiar su estado.');
       return;
     }
@@ -948,7 +948,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   restartDevice(device: SmartDeviceCard): void {
-    if (!this.currentRoles().includes('operador')) {
+    if (!this.currentRoles().includes('operador') && !this.auth.isAdmin()) {
       this.smartNotice.set('Tu rol lector no permite reiniciar dispositivos.');
       return;
     }
@@ -957,7 +957,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   toggleAutomation(rule: { id?: string | number; active: boolean; title: string }): void {
-    if (!this.currentRoles().includes('operador')) {
+    if (!this.currentRoles().includes('operador') && !this.auth.isAdmin()) {
       this.smartNotice.set('Tu rol lector no permite cambiar automatizaciones.');
       return;
     }
@@ -1113,7 +1113,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   setAlarm(status: 'armed' | 'disarmed'): void {
-    if (!this.currentRoles().includes('operador')) {
+    if (!this.currentRoles().includes('operador') && !this.auth.isAdmin()) {
       this.smartNotice.set('Tu rol lector no permite cambiar la alarma.');
       return;
     }
@@ -1624,6 +1624,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const cards = [...actuatorCards, ...sensorCards, ...nodeCards];
 
     if (cards.length) {
+      const hasLdrSensor = this.recordsFor('sensors').some(
+        (s) => String(s['sensor_type']).toUpperCase() === 'LDR',
+      );
+
+      if (!hasLdrSensor) {
+        const ldrCard: SmartDeviceCard = {
+          id: 'local-ldr',
+          source: 'local',
+          title: 'Sensor LDR',
+          subtitle: 'Exterior',
+          icon: 'pi pi-sun',
+          tone: 'yellow',
+          status: 'Detectando luminosidad',
+          statusValue: 'on',
+          detail: 'Monitoreo de luz ambiente',
+          online: true,
+          category: 'lighting',
+          canToggle: false,
+        };
+        return [...cards, ldrCard].slice(0, 12);
+      }
+
       return cards.slice(0, 12);
     }
 
