@@ -321,12 +321,63 @@
             </button>
           </div>
           <article class="settings-detail">
-            <h2>Configuracion avanzada</h2>
-            <div class="setting-toggle static"><span>MQTT</span><strong>Activo</strong></div>
-            <div class="setting-toggle static"><span>IP local</span><strong>192.168.1.20</strong></div>
-            <div class="setting-toggle static"><span>Backup automatico</span><strong>Diario</strong></div>
-            <div class="setting-toggle static"><span>Firmware</span><strong>v1.0.0</strong></div>
-            <button type="button" class="full-action" (click)="runAdminAction('Sincronizacion nube')">Sincronizar nube</button>
+            @switch (selectedSettingsPanel() || 'connection') {
+              @case ('notifications') {
+                <h2>Notificaciones</h2>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('push')">
+                  <span>Notificaciones push</span><strong>{{ settingsState().push ? 'Activo' : 'Inactivo' }}</strong>
+                </button>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('sound')">
+                  <span>Sonido de alertas</span><strong>{{ settingsState().sound ? 'Activo' : 'Inactivo' }}</strong>
+                </button>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('vibration')">
+                  <span>Vibracion</span><strong>{{ settingsState().vibration ? 'Activa' : 'Inactiva' }}</strong>
+                </button>
+              }
+              @case ('connection') {
+                <h2>Red y conexion</h2>
+                <div class="setting-toggle static"><span>MQTT Broker</span><strong>Activo</strong></div>
+                <div class="setting-toggle static"><span>IP local</span><strong>192.168.1.20</strong></div>
+                <div class="setting-toggle static"><span>Nodos en linea</span><strong>{{ connectedNodes().length }}</strong></div>
+                <button type="button" class="full-action" (click)="reconnectDevices()">Reconectar dispositivos</button>
+                <button type="button" class="full-action" (click)="runAdminAction('Sincronizacion nube')">Sincronizar nube</button>
+              }
+              @case ('language') {
+                <h2>Idioma</h2>
+                <div class="segmented-row">
+                  <button type="button" [class.active]="settingsState().language === 'Espanol'" (click)="setSettingValue('language', 'Espanol')">Espanol</button>
+                  <button type="button" [class.active]="settingsState().language === 'Ingles'" (click)="setSettingValue('language', 'Ingles')">Ingles</button>
+                </div>
+              }
+              @case ('theme') {
+                <h2>Tema visual</h2>
+                <div class="segmented-row">
+                  <button type="button" [class.active]="settingsState().theme === 'Oscuro'" (click)="setSettingValue('theme', 'Oscuro')">Oscuro</button>
+                  <button type="button" [class.active]="settingsState().theme === 'Claro'" (click)="setSettingValue('theme', 'Claro')">Claro</button>
+                  <button type="button" [class.active]="settingsState().theme === 'Automatico'" (click)="setSettingValue('theme', 'Automatico')">Auto</button>
+                </div>
+              }
+              @case ('security') {
+                <h2>Seguridad de cuenta</h2>
+                <button type="button" class="setting-toggle" (click)="openProfileEditor()">
+                  <span>Cambiar contrasena</span><strong>Abrir</strong>
+                </button>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('pin')">
+                  <span>PIN de seguridad</span><strong>{{ settingsState().pin ? 'Activo' : 'Inactivo' }}</strong>
+                </button>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('biometric')">
+                  <span>Biometria</span><strong>{{ settingsState().biometric ? 'Activa' : 'Inactiva' }}</strong>
+                </button>
+              }
+              @case ('about') {
+                <h2>Informacion del sistema</h2>
+                <div class="setting-toggle static"><span>Version app</span><strong>1.0.0</strong></div>
+                <div class="setting-toggle static"><span>Firmware</span><strong>v1.0.0</strong></div>
+                <div class="setting-toggle static"><span>Backup automatico</span><strong>Diario</strong></div>
+                <div class="setting-toggle static"><span>Estado</span><strong>{{ smartHeader().safe ? 'Operativo' : 'Con alertas' }}</strong></div>
+                <button type="button" class="full-action" (click)="runAdminAction('Solicitud de soporte tecnico')">Contactar soporte</button>
+              }
+            }
           </article>
         </section>
       }
@@ -376,19 +427,76 @@
         <section class="admin-section-head">
           <div>
             <h2>Sistema</h2>
-            <p>Monitoreo tecnico de recursos, API y servidor</p>
+            <p>Haz clic en un recurso para gestionar sus registros</p>
           </div>
           <button type="button" (click)="loadAll()"><span class="pi pi-refresh"></span>Recargar</button>
         </section>
         <section class="admin-system-grid">
           @for (resource of adminSystemResources(); track resource.key) {
-            <article class="admin-system-card" [class.error]="resource.error">
+            <article
+              class="admin-system-card"
+              [class.error]="resource.error"
+              [class.selected]="systemSelectedKey() === resource.key"
+              (click)="toggleSystemResource(resource.key)"
+            >
               <span [class]="resource.icon"></span>
               <div><strong>{{ resource.label }}</strong><p>{{ resource.error || 'Operativo' }}</p></div>
               <b>{{ resource.records }}</b>
+              <button
+                type="button"
+                class="sys-add-btn"
+                title="Agregar {{ resource.label }}"
+                (click)="$event.stopPropagation(); openAdminCreate(resource.key)"
+              >
+                <span class="pi pi-plus"></span>
+              </button>
             </article>
           }
         </section>
+
+        @if (systemSelectedKey()) {
+          <section class="system-resource-panel">
+            <div class="sys-panel-head">
+              <h3>
+                <span [class]="endpointByKey(systemSelectedKey()!)?.icon"></span>
+                {{ endpointByKey(systemSelectedKey()!)?.label }}
+                <em>{{ recordsFor(systemSelectedKey()!).length }} registros</em>
+              </h3>
+              <div class="sys-panel-actions">
+                <button type="button" class="sys-create-btn" (click)="openAdminCreate(systemSelectedKey()!)">
+                  <span class="pi pi-plus"></span> Agregar
+                </button>
+                <button type="button" class="sys-close-btn" (click)="systemSelectedKey.set(null)">
+                  <span class="pi pi-times"></span>
+                </button>
+              </div>
+            </div>
+
+            @if (!recordsFor(systemSelectedKey()!).length) {
+              <div class="sys-empty">
+                <span class="pi pi-inbox"></span>
+                <p>Sin registros. Agrega el primero.</p>
+              </div>
+            } @else {
+              <div class="sys-records-list">
+                @for (record of recordsFor(systemSelectedKey()!); track recordId(record)) {
+                  <div class="sys-record-row">
+                    <span class="sys-record-id">#{{ recordId(record) }}</span>
+                    <span class="sys-record-label">{{ objectLabel(systemSelectedKey()!, record) }}</span>
+                    <div class="sys-record-btns">
+                      <button type="button" title="Editar" (click)="openAdminEdit(systemSelectedKey()!, record)">
+                        <span class="pi pi-pencil"></span>
+                      </button>
+                      <button type="button" title="Eliminar" class="danger" (click)="deleteAdminRecord(systemSelectedKey()!, record)">
+                        <span class="pi pi-trash"></span>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
       }
     }
   </section>

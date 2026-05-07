@@ -141,6 +141,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private clockId: number | null = null;
 
   readonly adminSection = signal<AdminSection>('home');
+  readonly systemSelectedKey = signal<string | null>(null);
   readonly adminDeviceSearch = signal('');
   readonly adminMenu: AdminMenuItem[] = [
     { key: 'home', label: 'Inicio', icon: 'pi pi-home' },
@@ -890,6 +891,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.smartNotice.set(`${action} solicitado correctamente.`);
   }
 
+  toggleSystemResource(key: string): void {
+    this.systemSelectedKey.set(this.systemSelectedKey() === key ? null : key);
+  }
+
   criticalAlertCount(): number {
     return this.activeAlerts().filter((alert) =>
       ['critical', 'high'].includes(String(alert['severity_level'] ?? '').toLowerCase()),
@@ -1358,7 +1363,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.objectLabel(endpointKey, record);
   }
 
-  private objectLabel(endpointKey: string, record: ApiRecord): string {
+  objectLabel(endpointKey: string, record: ApiRecord): string {
     const labelFields: Record<string, string[]> = {
       homes: ['home_name', 'address'],
       zones: ['zone_name', 'description'],
@@ -1554,7 +1559,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  private recordsFor(key: string): ApiRecord[] {
+  recordsFor(key: string): ApiRecord[] {
     return this.states()[key]?.records ?? [];
   }
 
@@ -1964,7 +1969,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return 'other';
   }
 
-  private endpointByKey(key: string): EndpointDefinition | undefined {
+  endpointByKey(key: string): EndpointDefinition | undefined {
     return ENDPOINTS.find((endpoint) => endpoint.key === key);
   }
 

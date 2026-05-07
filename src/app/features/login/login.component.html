@@ -4,9 +4,9 @@
       <span class="pi pi-shield"></span>
     </div>
 
-    <div>
+    <div class="brand-text">
       <p class="eyebrow">IoT Security Console</p>
-      <h1>Control de acceso, sensores y automatizacion</h1>
+      <h1>Control inteligente de tu hogar</h1>
     </div>
 
     <div class="signal-grid" aria-hidden="true">
@@ -48,7 +48,9 @@
   <section class="auth-panel">
     <div class="auth-card">
       <div class="form-heading">
-        <span class="pi pi-sign-in"></span>
+        <div class="form-icon-wrap">
+          <span class="pi pi-sign-in"></span>
+        </div>
         <div>
           <h2>Acceso IoT Security</h2>
           <p>Autenticacion por token Bearer</p>
@@ -70,7 +72,7 @@
             type="text"
             formControlName="identifier"
             autocomplete="username"
-            placeholder="admin o admin@test.com"
+            placeholder="admin o admin@ejemplo.com"
           />
         </label>
 
@@ -92,7 +94,7 @@
           icon="pi pi-arrow-right"
           iconPos="right"
           [loading]="loading()"
-          styleClass="w-full justify-center"
+          class="w-full"
         />
       </form>
     </div>
