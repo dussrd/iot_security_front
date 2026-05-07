@@ -1,5 +1,0 @@
-[phases.install]
-cmds = ["npm ci"]
-
-[phases.build]
-cmds = ["npm run build", "cp -r dist/front_iot/browser ./browser"]
