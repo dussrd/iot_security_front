@@ -1,5 +1,6 @@
-import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { catchError, finalize, forkJoin, map, of } from 'rxjs';
@@ -120,6 +121,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly api = inject(IotApiService);
   private readonly router = inject(Router);
   readonly auth = inject(AuthService);
+  private readonly titleService = inject(Title);
+  private readonly doc = inject(DOCUMENT);
+
+  readonly sidebarOpen = signal(false);
 
   readonly groups: EndpointDefinition['group'][] = ['core', 'devices', 'automation', 'users'];
   readonly selectedKey = signal('homes');
@@ -545,6 +550,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .sort((a, b) => b.timeValue - a.timeValue)
       .slice(0, 8),
   );
+
+  constructor() {
+    const savedTheme = localStorage.getItem('iot_theme') ?? 'dark';
+    this.doc.documentElement.setAttribute('data-theme', savedTheme);
+    const themeLabel = savedTheme === 'light' ? 'Claro' : savedTheme === 'auto' ? 'Automatico' : 'Oscuro';
+    this.settingsState.update((s) => ({ ...s, theme: themeLabel }));
+
+    effect(() => {
+      if (this.auth.isAdmin()) {
+        const label = this.adminMenu.find((m) => m.key === this.adminSection())?.label ?? 'Inicio';
+        this.titleService.setTitle(`${label} — SmartHome IoT`);
+      } else {
+        const label = this.smartMenu.find((m) => m.key === this.smartSection())?.label ?? 'Inicio';
+        this.titleService.setTitle(`${label} — SmartHome IoT`);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.clockId = window.setInterval(() => this.currentTime.set(new Date()), 60000);
@@ -1090,10 +1112,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   setSettingValue(key: 'language' | 'theme', value: string): void {
-    this.settingsState.set({
-      ...this.settingsState(),
-      [key]: value,
-    });
+    this.settingsState.set({ ...this.settingsState(), [key]: value });
+
+    if (key === 'theme') {
+      const map: Record<string, string> = { Oscuro: 'dark', Claro: 'light', Automatico: 'auto' };
+      const themeKey = map[value] ?? 'dark';
+      this.doc.documentElement.setAttribute('data-theme', themeKey);
+      localStorage.setItem('iot_theme', themeKey);
+    }
+
+    if (key === 'language') {
+      localStorage.setItem('iot_lang', value === 'Ingles' ? 'en' : 'es');
+    }
+
     this.smartNotice.set('Configuracion actualizada.');
   }
 

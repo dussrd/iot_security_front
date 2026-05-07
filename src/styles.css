@@ -1,6 +1,157 @@
 @import "tailwindcss";
 @import "primeicons/primeicons.css";
 
+/* ── Tema oscuro (por defecto) ───────────────── */
+:root,
+html[data-theme="dark"] {
+  --bg-base:      #0d1117;
+  --bg-surface:   #161b22;
+  --bg-elevated:  #1c2333;
+  --border:       #21262d;
+  --border-mid:   #30363d;
+  --text-primary: #e6edf3;
+  --text-muted:   #7d8590;
+  --text-faint:   #484f58;
+  --accent:       #14b8a6;
+  --accent-dim:   rgba(20,184,166,0.12);
+  --accent-glow:  rgba(20,184,166,0.3);
+  --danger:       #f85149;
+  color-scheme: dark;
+}
+
+/* ── Tema claro ──────────────────────────────── */
+html[data-theme="light"] {
+  --bg-base:      #f0f4f8;
+  --bg-surface:   #ffffff;
+  --bg-elevated:  #f8fafc;
+  --border:       #e2e8f0;
+  --border-mid:   #cbd5e1;
+  --text-primary: #0f172a;
+  --text-muted:   #64748b;
+  --text-faint:   #94a3b8;
+  --accent:       #0f766e;
+  --accent-dim:   rgba(15,118,110,0.1);
+  --accent-glow:  rgba(15,118,110,0.25);
+  --danger:       #dc2626;
+  color-scheme: light;
+}
+
+/* ── Tema automático (sigue el SO) ───────────── */
+@media (prefers-color-scheme: light) {
+  html[data-theme="auto"] {
+    --bg-base:      #f0f4f8;
+    --bg-surface:   #ffffff;
+    --bg-elevated:  #f8fafc;
+    --border:       #e2e8f0;
+    --border-mid:   #cbd5e1;
+    --text-primary: #0f172a;
+    --text-muted:   #64748b;
+    --text-faint:   #94a3b8;
+    --accent:       #0f766e;
+    --accent-dim:   rgba(15,118,110,0.1);
+    --accent-glow:  rgba(15,118,110,0.25);
+    --danger:       #dc2626;
+    color-scheme: light;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] {
+    --bg-base:      #0d1117;
+    --bg-surface:   #161b22;
+    --bg-elevated:  #1c2333;
+    --border:       #21262d;
+    --border-mid:   #30363d;
+    --text-primary: #e6edf3;
+    --text-muted:   #7d8590;
+    --text-faint:   #484f58;
+    --accent:       #14b8a6;
+    --accent-dim:   rgba(20,184,166,0.12);
+    --accent-glow:  rgba(20,184,166,0.3);
+    --danger:       #f85149;
+    color-scheme: dark;
+  }
+}
+
+/* ── Overrides de tema para shells principales ─ */
+html[data-theme="light"] .admin-shell {
+  background: linear-gradient(135deg, #e8f4f8 0%, #f0f7ff 50%, #e8f0f8 100%) !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .admin-sidebar {
+  background: rgba(255,255,255,0.9) !important;
+  border-right-color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .admin-sidebar nav button {
+  color: #334155 !important;
+}
+
+html[data-theme="light"] .admin-sidebar nav button.active,
+html[data-theme="light"] .admin-sidebar nav button:hover {
+  background: #0f766e !important;
+  color: #fff !important;
+}
+
+html[data-theme="light"] .admin-workspace,
+html[data-theme="light"] .admin-panel,
+html[data-theme="light"] .admin-summary-card,
+html[data-theme="light"] .admin-device-row,
+html[data-theme="light"] .admin-system-card,
+html[data-theme="light"] .admin-user-card,
+html[data-theme="light"] .system-resource-panel,
+html[data-theme="light"] .sys-table thead {
+  background: #fff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .admin-topbar {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .smart-shell {
+  background: #f0f4f8 !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .smart-sidebar {
+  background: rgba(255,255,255,0.96) !important;
+  border-right-color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .smart-sidebar nav button {
+  color: #334155 !important;
+}
+
+html[data-theme="light"] .smart-sidebar nav button.active,
+html[data-theme="light"] .smart-sidebar nav button:hover {
+  background: rgba(15,118,110,0.12) !important;
+  color: #0f766e !important;
+}
+
+html[data-theme="light"] .smart-workspace {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .smart-summary-card,
+html[data-theme="light"] .smart-home-map,
+html[data-theme="light"] .smart-panel,
+html[data-theme="light"] .device-card,
+html[data-theme="light"] .quick-panel,
+html[data-theme="light"] .automation-card,
+html[data-theme="light"] .history-panel,
+html[data-theme="light"] .profile-card,
+html[data-theme="light"] .profile-details,
+html[data-theme="light"] .settings-list,
+html[data-theme="light"] .settings-detail {
+  background: #fff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* ── Base reset ──────────────────────────────── */
 * {
   box-sizing: border-box;
 }
@@ -9,10 +160,12 @@ html,
 body {
   min-height: 100%;
   margin: 0;
-  background: #f6f8fb;
-  color: #102033;
+  background: var(--bg-base, #0d1117);
+  color: var(--text-primary, #e6edf3);
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 button,
@@ -28,27 +181,6 @@ button {
 
 .p-button {
   font-weight: 800;
-}
-
-.p-datatable {
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.9rem;
-}
-
-.p-datatable-thead > tr > th {
-  background: #f8fafc;
-  color: #475569;
-  font-size: 0.75rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.p-datatable-tbody > tr > td {
-  max-width: 18rem;
-  color: #334155;
-  vertical-align: middle;
 }
 
 .p-password,

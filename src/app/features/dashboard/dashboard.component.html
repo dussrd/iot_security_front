@@ -1,5 +1,9 @@
 @if (auth.isAdmin()) {
-<main class="admin-shell">
+<main class="admin-shell" [class.sidebar-open]="sidebarOpen()">
+  <button type="button" class="admin-hamburger" (click)="sidebarOpen.set(!sidebarOpen())" aria-label="Menu">
+    <span class="pi" [class.pi-bars]="!sidebarOpen()" [class.pi-times]="sidebarOpen()"></span>
+  </button>
+  <div class="admin-sidebar-overlay" (click)="sidebarOpen.set(false)"></div>
   <aside class="admin-sidebar">
     <div class="admin-brand">
       <span class="pi pi-wifi"></span>

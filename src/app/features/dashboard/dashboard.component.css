@@ -519,6 +519,31 @@ textarea.code-input {
   gap: 0.5rem;
 }
 
+.admin-hamburger {
+  display: none;
+  position: fixed;
+  top: 0.9rem;
+  left: 0.9rem;
+  z-index: 120;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 1px solid rgba(148,163,184,0.2);
+  border-radius: 0.7rem;
+  background: rgba(2,8,23,0.9);
+  color: #e2e8f0;
+  font-size: 1rem;
+  backdrop-filter: blur(12px);
+}
+
+.admin-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(2px);
+}
+
 .admin-shell {
   display: grid;
   min-height: 100vh;
@@ -2106,6 +2131,101 @@ textarea.code-input {
   .smart-bottom-nav button.active {
     background: rgba(37, 99, 235, 0.25);
     color: #60a5fa;
+  }
+}
+
+/* ── Admin shell responsive ──────────────────── */
+@media (max-width: 1024px) {
+  .admin-hamburger {
+    display: grid;
+    place-items: center;
+  }
+
+  .admin-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-shell.sidebar-open .admin-sidebar-overlay {
+    display: block;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    height: 100vh;
+    width: 16rem;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 4px 0 32px rgba(0,0,0,0.5);
+  }
+
+  .admin-shell.sidebar-open .admin-sidebar {
+    transform: translateX(0);
+  }
+
+  .admin-workspace {
+    padding-top: 4rem;
+  }
+
+  .admin-topbar {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .admin-status-strip {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .admin-system-grid,
+  .admin-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-device-row {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .admin-row-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .sys-table-wrap {
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-summary-grid,
+  .admin-system-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-camera-grid,
+  .scene-grid,
+  .admin-home-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-topbar h1 {
+    font-size: 1.3rem;
+  }
+
+  .admin-quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .editor-form {
+    grid-template-columns: 1fr;
+  }
+
+  .sys-panel-head {
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 }
 
