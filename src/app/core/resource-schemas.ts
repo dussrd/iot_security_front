@@ -1,3 +1,5 @@
+import { CITY_OPTIONS } from './location-options';
+
 export type FormFieldType =
   | 'text'
   | 'email'
@@ -25,8 +27,14 @@ export const RESOURCE_FIELDS: Record<string, FormFieldDefinition[]> = {
   homes: [
     { key: 'home_name', label: 'Nombre', type: 'text', required: true },
     { key: 'address', label: 'Direccion', type: 'text', required: true },
-    { key: 'city', label: 'Ciudad', type: 'text', required: true },
-    { key: 'country', label: 'Pais', type: 'text' },
+    {
+      key: 'city',
+      label: 'Ciudad',
+      type: 'select',
+      required: true,
+      options: CITY_OPTIONS.map((option) => option.value),
+    },
+    { key: 'barrio', label: 'Barrio', type: 'select', required: true },
     { key: 'is_active', label: 'Activo', type: 'checkbox' },
   ],
   zones: [

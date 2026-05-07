@@ -1,6 +1,6 @@
 import { EndpointDefinition } from './app.models';
 
-export const API_BASE_URL = 'http://127.0.0.1:8000/api';
+export const API_BASE_URL = 'https://iotsecurity-production.up.railway.app/api';
 
 export const ENDPOINTS: EndpointDefinition[] = [
   {
@@ -11,6 +11,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-home',
     accent: 'teal',
     description: 'Unidades residenciales registradas',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'zones',
@@ -20,6 +21,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-map-marker',
     accent: 'cyan',
     description: 'Sectores monitoreados por sensores',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'sensor-readings',
@@ -29,6 +31,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-chart-line',
     accent: 'emerald',
     description: 'Telemetria recibida desde dispositivos',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'motion-events',
@@ -38,6 +41,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-bolt',
     accent: 'amber',
     description: 'Eventos de deteccion recientes',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'system-alerts',
@@ -47,6 +51,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-exclamation-triangle',
     accent: 'rose',
     description: 'Incidentes y estados criticos',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'nodes',
@@ -56,6 +61,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-sitemap',
     accent: 'indigo',
     description: 'Controladores conectados al sistema',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'sensors',
@@ -65,6 +71,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-compass',
     accent: 'sky',
     description: 'Dispositivos de captura y monitoreo',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'actuators',
@@ -74,6 +81,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-sliders-h',
     accent: 'orange',
     description: 'Elementos que ejecutan comandos fisicos',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'automation-settings',
@@ -83,6 +91,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-cog',
     accent: 'violet',
     description: 'Reglas y umbrales configurados',
+    allowedRoles: ['admin', 'operador'],
   },
   {
     key: 'lighting-statuses',
@@ -92,6 +101,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-lightbulb',
     accent: 'yellow',
     description: 'Estados de luces y escenas',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'alarm-statuses',
@@ -101,6 +111,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-shield',
     accent: 'red',
     description: 'Activacion y salud de alarmas',
+    allowedRoles: ['admin', 'operador', 'lector'],
   },
   {
     key: 'remote-commands',
@@ -110,6 +121,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-send',
     accent: 'blue',
     description: 'Ordenes remotas solicitadas',
+    allowedRoles: ['admin', 'operador'],
   },
   {
     key: 'command-responses',
@@ -119,6 +131,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-reply',
     accent: 'lime',
     description: 'Resultados reportados por nodos',
+    allowedRoles: ['admin', 'operador'],
   },
   {
     key: 'users',
@@ -128,6 +141,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-users',
     accent: 'fuchsia',
     description: 'Cuentas con acceso al backend',
+    allowedRoles: ['admin'],
   },
   {
     key: 'roles',
@@ -137,6 +151,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-id-card',
     accent: 'purple',
     description: 'Perfiles y niveles de acceso',
+    allowedRoles: ['admin'],
   },
   {
     key: 'user-roles',
@@ -146,6 +161,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-key',
     accent: 'stone',
     description: 'Relacion usuario-rol',
+    allowedRoles: ['admin'],
   },
   {
     key: 'notifications',
@@ -155,6 +171,7 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-bell',
     accent: 'pink',
     description: 'Mensajes enviados a usuarios',
+    allowedRoles: ['admin', 'operador'],
   },
   {
     key: 'system-audits',
@@ -164,5 +181,6 @@ export const ENDPOINTS: EndpointDefinition[] = [
     icon: 'pi pi-history',
     accent: 'zinc',
     description: 'Trazabilidad de acciones',
+    allowedRoles: ['admin'],
   },
 ];

@@ -25,6 +25,10 @@ export class IotApiService {
     return this.http.put<ApiRecord>(`${this.url(endpoint)}${id}/`, payload);
   }
 
+  patch(endpoint: EndpointDefinition, id: string | number, payload: ApiRecord): Observable<ApiRecord> {
+    return this.http.patch<ApiRecord>(`${this.url(endpoint)}${id}/`, payload);
+  }
+
   remove(endpoint: EndpointDefinition, id: string | number): Observable<void> {
     return this.http.delete<void>(`${this.url(endpoint)}${id}/`);
   }

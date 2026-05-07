@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
 import { API_BASE_URL } from './api-endpoints';
-import { AppUser, AuthResponse, LoginPayload, RegisterPayload } from './app.models';
+import { AppUser, AuthResponse, LoginPayload } from './app.models';
 
 const TOKEN_KEY = 'iot_security_token';
 const USER_KEY = 'iot_security_user';
@@ -32,10 +32,6 @@ export class AuthService {
       .pipe(tap((response) => this.storeSession(response)));
   }
 
-  register(payload: RegisterPayload): Observable<AppUser> {
-    return this.http.post<AppUser>(`${API_BASE_URL}/users/users/`, payload);
-  }
-
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -47,6 +43,12 @@ export class AuthService {
   updateUser(user: AppUser): void {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     this.userState.set(user);
+  }
+
+  updateProfile(payload: Partial<AppUser> & { password?: string }): Observable<AppUser> {
+    return this.http
+      .patch<AppUser>(`${API_BASE_URL}/users/users/me/`, payload)
+      .pipe(tap((user) => this.updateUser(user)));
   }
 
   private storeSession(response: AuthResponse): void {

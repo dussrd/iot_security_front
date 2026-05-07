@@ -1,3 +1,4 @@
+@if (auth.isAdmin()) {
 <main class="dashboard-shell">
   <aside class="sidebar">
     <div class="sidebar-brand">
@@ -9,7 +10,7 @@
     </div>
 
     <nav aria-label="Modulos">
-      @for (group of groups; track group) {
+      @for (group of visibleGroups(); track group) {
         <section>
           <p>{{ groupLabel(group) }}</p>
           @for (state of orderedStates(); track state.definition.key) {
@@ -40,7 +41,7 @@
       <div class="user-strip">
         <p-tag
           [severity]="auth.isAdmin() ? 'success' : 'info'"
-          [value]="auth.isAdmin() ? 'Admin' : 'Solo lectura'"
+          [value]="currentRoleLabel()"
         />
         <div class="avatar">{{ auth.user()?.username?.slice(0, 2)?.toUpperCase() || 'US' }}</div>
         <div>
@@ -145,7 +146,7 @@
             />
           </span>
           <p-button icon="pi pi-refresh" [outlined]="true" (click)="refreshSelected()" />
-          @if (auth.isAdmin()) {
+          @if (canMutateSelected()) {
             <p-button icon="pi pi-plus" label="Nuevo" (click)="openCreate()" />
           }
         </div>
@@ -183,7 +184,7 @@
                 @for (column of columns(); track column) {
                   <th>{{ fieldLabel(column) }}</th>
                 }
-                @if (auth.isAdmin()) {
+                @if (canMutateSelected()) {
                   <th class="actions-col">Acciones</th>
                 }
               </tr>
@@ -200,7 +201,7 @@
                       }
                     </td>
                   }
-                  @if (auth.isAdmin()) {
+                  @if (canMutateSelected()) {
                     <td class="actions-col">
                       @if (pendingDelete === record) {
                         <div class="confirm-strip">
@@ -261,9 +262,13 @@
               }
             </select>
           } @else if (field.type === 'select') {
-            <select [(ngModel)]="editorForm[field.key]" [name]="field.key">
-              @for (option of field.options ?? []; track option) {
-                <option [value]="option">{{ option }}</option>
+            <select
+              [(ngModel)]="editorForm[field.key]"
+              [name]="field.key"
+              (ngModelChange)="onFormFieldChange(field)"
+            >
+              @for (option of fieldOptions(field); track option) {
+                <option [value]="option">{{ optionLabel(field, option) }}</option>
               }
             </select>
           } @else if (field.type === 'checkbox') {
@@ -312,3 +317,670 @@
     </div>
   </div>
 </p-dialog>
+} @else {
+<main class="smart-shell">
+  <aside class="smart-sidebar">
+    <div class="smart-brand">
+      <span class="pi pi-wifi"></span>
+      <div>
+        <strong>SmartHome IoT</strong>
+        <small>{{ smartHeader().location }}</small>
+      </div>
+    </div>
+
+    <nav aria-label="Navegacion SmartHome">
+      @for (item of smartMenuItems(); track item.key) {
+        <button
+          type="button"
+          [class.active]="smartSection() === item.key"
+          (click)="selectSmartSection(item.key)"
+        >
+          <span [class]="item.icon"></span>
+          <span>{{ item.label }}</span>
+        </button>
+      }
+    </nav>
+
+    <button type="button" class="smart-logout" (click)="logout()">
+      <span class="pi pi-sign-out"></span>
+      <span>Cerrar sesion</span>
+    </button>
+  </aside>
+
+  <section class="smart-workspace">
+    <header class="smart-topbar">
+      <div>
+        <p>{{ smartHeader().homeName }}</p>
+        <h1>{{ smartSection() === 'home' ? 'Control del hogar' : smartSectionTitle() }}</h1>
+      </div>
+
+      <div class="smart-status-strip">
+        <div class="weather-chip">
+          <span class="pi pi-sun"></span>
+          <strong>{{ smartHeader().temperature }}</strong>
+          <small>{{ smartHeader().weather }}</small>
+        </div>
+        <div class="clock-chip">
+          <span class="pi pi-clock"></span>
+          <strong>{{ currentTime() | date: 'shortTime' }}</strong>
+          <small>{{ currentTime() | date: 'mediumDate' }}</small>
+        </div>
+        <span class="security-pill" [class.danger]="!smartHeader().safe">
+          <i class="pi" [class.pi-shield]="smartHeader().safe" [class.pi-exclamation-triangle]="!smartHeader().safe"></i>
+          {{ smartHeader().safe ? 'Seguro' : 'Alerta activa' }}
+        </span>
+      </div>
+    </header>
+
+    @if (smartNotice()) {
+      <div class="smart-notice">
+        <span class="pi pi-info-circle"></span>
+        <p>{{ smartNotice() }}</p>
+      </div>
+    }
+
+    @switch (smartSection()) {
+      @case ('home') {
+        <section class="smart-overview-grid">
+          @for (card of smartSummaryCards(); track card.label) {
+            <article class="smart-summary-card" [attr.data-tone]="card.tone">
+              <div>
+                <span [class]="card.icon"></span>
+                <small>{{ card.label }}</small>
+              </div>
+              <strong>{{ card.value }}</strong>
+              <p>{{ card.detail }}</p>
+            </article>
+          }
+        </section>
+
+        <section class="smart-home-grid">
+          <article class="smart-home-map">
+            <div class="panel-heading">
+              <div>
+                <h2>Vista general del hogar</h2>
+                <p>Sensores, luces y accesos principales</p>
+              </div>
+              <span>En vivo</span>
+            </div>
+
+            <div class="house-visual">
+              @for (item of homeVisualItems(); track item.label) {
+                <button
+                  type="button"
+                  class="map-pin"
+                  [class]="item.position"
+                  [attr.data-tone]="item.tone"
+                  [class.inactive]="!item.active"
+                  (click)="selectSmartSection(item.label === 'Entrada' ? 'cameras' : 'devices')"
+                >
+                  <span [class]="item.icon"></span>
+                  <small>{{ item.label }}</small>
+                </button>
+              }
+            </div>
+          </article>
+
+          <article class="smart-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Actividad reciente</h2>
+                <p>Eventos importantes del sistema</p>
+              </div>
+            </div>
+
+            <div class="smart-timeline compact">
+              @for (event of smartHistory().slice(0, 5); track event.title + event.time) {
+                <div class="smart-event" [attr.data-tone]="event.tone">
+                  <span [class]="event.icon"></span>
+                  <div>
+                    <strong>{{ event.title }}</strong>
+                    <p>{{ event.subtitle }}</p>
+                  </div>
+                  <time>{{ elapsedFrom(event.time) }}</time>
+                </div>
+              }
+            </div>
+
+            <button type="button" class="full-action" (click)="selectSmartSection('history')">
+              Ver historial completo
+            </button>
+          </article>
+        </section>
+
+        <section class="smart-lower-grid">
+          <article class="smart-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Alertas activas</h2>
+                <p>Estado critico por categoria</p>
+              </div>
+            </div>
+            <div class="alert-breakdown">
+              @for (item of alertBreakdown(); track item.label) {
+                <div>
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.value }}</strong>
+                </div>
+              }
+            </div>
+          </article>
+
+          <article class="quick-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Accesos rapidos</h2>
+                <p>Acciones frecuentes del hogar</p>
+              </div>
+            </div>
+            <div class="quick-actions">
+              <button type="button" (click)="setAlarm('armed')">
+                <span class="pi pi-shield"></span>
+                <strong>Activar alarma</strong>
+                <small>Seguridad</small>
+              </button>
+              <button type="button" (click)="setAllLights('on')">
+                <span class="pi pi-lightbulb"></span>
+                <strong>Encender luces</strong>
+                <small>Manual</small>
+              </button>
+              <button type="button" (click)="selectSmartSection('cameras')">
+                <span class="pi pi-video"></span>
+                <strong>Ver camaras</strong>
+                <small>En vivo</small>
+              </button>
+              <button type="button" (click)="runSmartAction('Activar modo noche')">
+                <span class="pi pi-moon"></span>
+                <strong>Modo noche</strong>
+                <small>Automatizacion</small>
+              </button>
+            </div>
+          </article>
+        </section>
+      }
+
+      @case ('devices') {
+        <section class="smart-section-head">
+          <div>
+            <h2>Dispositivos conectados</h2>
+            <p>Luces, sensores, alarmas y nodos de conexion</p>
+          </div>
+          <div class="smart-filters">
+            <button type="button" [class.active]="deviceFilter() === 'all'" (click)="selectDeviceFilter('all')">
+              Todos
+            </button>
+            <button
+              type="button"
+              [class.active]="deviceFilter() === 'security'"
+              (click)="selectDeviceFilter('security')"
+            >
+              Seguridad
+            </button>
+            <button
+              type="button"
+              [class.active]="deviceFilter() === 'lighting'"
+              (click)="selectDeviceFilter('lighting')"
+            >
+              Iluminacion
+            </button>
+            <button type="button" [class.active]="deviceFilter() === 'other'" (click)="selectDeviceFilter('other')">
+              Otros
+            </button>
+          </div>
+        </section>
+
+        <section class="device-grid">
+          @for (device of filteredSmartDeviceCards(); track device.source + device.id) {
+            <article class="device-card" [attr.data-tone]="device.tone">
+              <div>
+                <span [class]="device.icon"></span>
+                <i [class.online]="device.online"></i>
+              </div>
+              <h3>{{ device.title }}</h3>
+              <p>{{ device.subtitle }}</p>
+              <strong>{{ device.status }}</strong>
+              <small>{{ device.detail }}</small>
+              <div class="device-actions">
+                <button type="button" [disabled]="!device.canToggle" (click)="toggleDevice(device)">
+                  ON/OFF
+                </button>
+                <button type="button" (click)="restartDevice(device)">Reiniciar</button>
+                <button type="button" (click)="openDeviceDetails(device)">Detalles</button>
+              </div>
+            </article>
+          } @empty {
+            <div class="smart-empty">
+              <span class="pi pi-filter"></span>
+              <p>No hay dispositivos para este filtro.</p>
+            </div>
+          }
+        </section>
+      }
+
+      @case ('cameras') {
+        <section class="camera-layout">
+          <article class="camera-live">
+            <div class="panel-heading">
+              <div>
+                <h2>Vista en vivo</h2>
+                <p>Patio, entrada y garaje</p>
+              </div>
+              <span>IA activa</span>
+            </div>
+            <div class="camera-frame">
+              <span class="camera-badge">Patio delantero · En linea</span>
+            </div>
+            <div class="camera-controls">
+              <button type="button" (click)="runSmartAction('Captura de camara')">
+                <span class="pi pi-camera"></span>
+              </button>
+              <button type="button" (click)="runSmartAction('Grabacion de camara')">
+                <span class="pi pi-circle-fill"></span>
+              </button>
+              <button type="button" (click)="runSmartAction('Audio de camara')">
+                <span class="pi pi-volume-up"></span>
+              </button>
+              <button type="button" (click)="runSmartAction('Zoom de camara')">
+                <span class="pi pi-search-plus"></span>
+              </button>
+            </div>
+          </article>
+
+          <div class="camera-list">
+            @for (camera of cameraCards; track camera.name) {
+              <article class="camera-card" [attr.data-tone]="camera.tone">
+                <span class="pi pi-video"></span>
+                <div>
+                  <strong>{{ camera.name }}</strong>
+                  <p>{{ camera.location }}</p>
+                  <small>{{ camera.detail }}</small>
+                </div>
+                <em>{{ camera.status }}</em>
+              </article>
+            }
+          </div>
+        </section>
+      }
+
+      @case ('automations') {
+        <section class="automation-grid">
+          @for (rule of smartAutomations(); track rule.title) {
+            <article class="automation-card" [class.off]="!rule.active">
+              <div>
+                <span [class]="rule.icon"></span>
+                <button type="button" [class.active]="rule.active" (click)="toggleAutomation(rule)">
+                  <i></i>
+                </button>
+              </div>
+              <h3>{{ rule.title }}</h3>
+              <p>{{ rule.detail }}</p>
+              <footer>
+                <span>{{ rule.schedule }}</span>
+                <strong>Prioridad {{ rule.priority }}</strong>
+              </footer>
+            </article>
+          }
+        </section>
+      }
+
+      @case ('history') {
+        <section class="smart-section-head">
+          <div>
+            <h2>Historial de eventos</h2>
+            <p>Registro de seguridad, iluminacion, camaras y automatizaciones</p>
+          </div>
+          <div class="smart-filters">
+            <button type="button" [class.active]="historyFilter() === 'all'" (click)="selectHistoryFilter('all')">
+              Todos
+            </button>
+            <button
+              type="button"
+              [class.active]="historyFilter() === 'alerts'"
+              (click)="selectHistoryFilter('alerts')"
+            >
+              Alertas
+            </button>
+            <button
+              type="button"
+              [class.active]="historyFilter() === 'devices'"
+              (click)="selectHistoryFilter('devices')"
+            >
+              Dispositivos
+            </button>
+            <button
+              type="button"
+              [class.active]="historyFilter() === 'automations'"
+              (click)="selectHistoryFilter('automations')"
+            >
+              Automatizaciones
+            </button>
+          </div>
+        </section>
+
+        <section class="history-panel">
+          @for (group of ['today', 'yesterday', 'week']; track group) {
+            <div class="history-group">
+              <h3>{{ eventGroupLabel(group) }}</h3>
+              @for (event of filteredSmartHistory(); track event.title + event.time) {
+                @if (event.group === group) {
+                  <div class="history-row" [attr.data-tone]="event.tone">
+                    <time>{{ event.time ? (event.time | date: 'shortTime') : 'Sin hora' }}</time>
+                    <span [class]="event.icon"></span>
+                    <div>
+                      <strong>{{ event.title }}</strong>
+                      <p>{{ event.subtitle }} · {{ event.category }}</p>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          }
+        </section>
+      }
+
+      @case ('profile') {
+        <section class="profile-layout">
+          <article class="profile-card">
+            <div class="profile-avatar">
+              {{ auth.user()?.username?.slice(0, 2)?.toUpperCase() || 'US' }}
+            </div>
+            <h2>{{ auth.user()?.full_name || auth.user()?.username }}</h2>
+            <p>{{ smartHeader().homeName }}</p>
+            <button type="button" (click)="openProfileEditor()">Editar perfil</button>
+          </article>
+
+          <article class="profile-details">
+            <div>
+              <span>Correo electronico</span>
+              <strong>{{ auth.user()?.email || 'Sin correo' }}</strong>
+            </div>
+            <div>
+              <span>Telefono</span>
+              <strong>{{ auth.user()?.phone || 'Sin telefono' }}</strong>
+            </div>
+            <div>
+              <span>Ubicacion</span>
+              <strong>{{ smartHeader().location }}</strong>
+            </div>
+            <div>
+              <span>Miembros del hogar</span>
+              <strong>{{ homeMemberCount() }} miembros</strong>
+            </div>
+          </article>
+
+          <article class="profile-details">
+            <div>
+              <span>Seguridad</span>
+              <strong>Cambiar contrasena</strong>
+            </div>
+            <div>
+              <span>Biometria</span>
+              <strong>No configurada</strong>
+            </div>
+            <div>
+              <span>Dispositivos conectados</span>
+              <strong>{{ connectedNodes().length }} en linea</strong>
+            </div>
+          </article>
+        </section>
+      }
+
+      @case ('scenes') {
+        <section class="scene-grid">
+          @for (scene of sceneCards; track scene.name) {
+            <article class="scene-card" [attr.data-tone]="scene.tone">
+              <span [class]="scene.icon"></span>
+              <div>
+                <h3>{{ scene.name }}</h3>
+                <p>{{ scene.detail }}</p>
+              </div>
+              <button type="button" (click)="runSmartAction('Ejecutar escena ' + scene.name)">
+                <span class="pi pi-play"></span>
+              </button>
+            </article>
+          }
+        </section>
+      }
+
+      @case ('settings') {
+        <section class="settings-layout">
+          <div class="settings-list">
+            @for (setting of settingsGroups; track setting.label) {
+              <button
+                type="button"
+                [class.active]="selectedSettingsPanel() === setting.key"
+                (click)="openSettingsPanel(setting.key)"
+              >
+                <span [class]="setting.icon"></span>
+                <div>
+                  <strong>{{ setting.label }}</strong>
+                  <p>{{ setting.detail }}</p>
+                </div>
+                <i class="pi pi-angle-right"></i>
+              </button>
+            }
+          </div>
+
+          <article class="settings-detail">
+            @switch (selectedSettingsPanel() || 'notifications') {
+              @case ('notifications') {
+                <h2>Notificaciones</h2>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('push')">
+                  <span>Push</span>
+                  <strong>{{ settingsState().push ? 'Activo' : 'Inactivo' }}</strong>
+                </button>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('sound')">
+                  <span>Sonido</span>
+                  <strong>{{ settingsState().sound ? 'Activo' : 'Inactivo' }}</strong>
+                </button>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('vibration')">
+                  <span>Vibracion</span>
+                  <strong>{{ settingsState().vibration ? 'Activa' : 'Inactiva' }}</strong>
+                </button>
+              }
+              @case ('connection') {
+                <h2>Red y conexion</h2>
+                <div class="setting-toggle static">
+                  <span>Estado WiFi</span>
+                  <strong>{{ settingsState().wifi ? 'Conectado' : 'Desconectado' }}</strong>
+                </div>
+                <div class="setting-toggle static">
+                  <span>Nodos en linea</span>
+                  <strong>{{ connectedNodes().length }}</strong>
+                </div>
+                <button type="button" class="full-action" (click)="reconnectDevices()">Reconectar dispositivos</button>
+              }
+              @case ('language') {
+                <h2>Idioma</h2>
+                <div class="segmented-row">
+                  <button
+                    type="button"
+                    [class.active]="settingsState().language === 'Espanol'"
+                    (click)="setSettingValue('language', 'Espanol')"
+                  >
+                    Espanol
+                  </button>
+                  <button
+                    type="button"
+                    [class.active]="settingsState().language === 'Ingles'"
+                    (click)="setSettingValue('language', 'Ingles')"
+                  >
+                    Ingles
+                  </button>
+                </div>
+              }
+              @case ('theme') {
+                <h2>Tema</h2>
+                <div class="segmented-row">
+                  <button
+                    type="button"
+                    [class.active]="settingsState().theme === 'Claro'"
+                    (click)="setSettingValue('theme', 'Claro')"
+                  >
+                    Claro
+                  </button>
+                  <button
+                    type="button"
+                    [class.active]="settingsState().theme === 'Oscuro'"
+                    (click)="setSettingValue('theme', 'Oscuro')"
+                  >
+                    Oscuro
+                  </button>
+                  <button
+                    type="button"
+                    [class.active]="settingsState().theme === 'Automatico'"
+                    (click)="setSettingValue('theme', 'Automatico')"
+                  >
+                    Auto
+                  </button>
+                </div>
+              }
+              @case ('security') {
+                <h2>Seguridad</h2>
+                <button type="button" class="setting-toggle" (click)="openProfileEditor()">
+                  <span>Cambiar contrasena</span>
+                  <strong>Abrir</strong>
+                </button>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('pin')">
+                  <span>PIN de seguridad</span>
+                  <strong>{{ settingsState().pin ? 'Activo' : 'Inactivo' }}</strong>
+                </button>
+                <button type="button" class="setting-toggle" (click)="toggleSetting('biometric')">
+                  <span>Biometria</span>
+                  <strong>{{ settingsState().biometric ? 'Activa' : 'Inactiva' }}</strong>
+                </button>
+              }
+              @case ('about') {
+                <h2>Informacion</h2>
+                <div class="setting-toggle static">
+                  <span>Version app</span>
+                  <strong>1.0.0</strong>
+                </div>
+                <div class="setting-toggle static">
+                  <span>Estado sistema</span>
+                  <strong>{{ smartHeader().safe ? 'Operativo' : 'Con alertas' }}</strong>
+                </div>
+                <button type="button" class="full-action" (click)="runSmartAction('Solicitud de soporte')">Soporte</button>
+              }
+            }
+          </article>
+        </section>
+      }
+
+      @case ('alerts') {
+        <section class="alerts-layout">
+          @for (alert of emergencyAlerts(); track alert.title + alert.time) {
+            <article class="emergency-card" [attr.data-tone]="alert.resolved ? 'green' : alert.tone">
+              <span [class]="alert.icon"></span>
+              <div>
+                <h3>{{ alert.title }}</h3>
+                <p>{{ alert.detail }}</p>
+                <small>{{ alert.zone }} · {{ alert.time ? (alert.time | date: 'short') : 'Sin fecha' }}</small>
+              </div>
+              <div class="alert-actions">
+                <button type="button" (click)="selectSmartSection('cameras')">Ver camara</button>
+                <button type="button" [disabled]="alert.resolved" (click)="markAlertRead(alert)">
+                  {{ alert.resolved ? 'Leida' : 'Marcar leida' }}
+                </button>
+              </div>
+            </article>
+          }
+
+          <button type="button" class="outline-action" (click)="markAllAlertsRead()">
+            Marcar todas como leidas
+          </button>
+        </section>
+      }
+    }
+  </section>
+
+  <nav class="smart-bottom-nav" aria-label="Navegacion movil SmartHome">
+    @for (item of smartMenuItems().slice(0, 5); track item.key) {
+      <button
+        type="button"
+        [class.active]="smartSection() === item.key"
+        (click)="selectSmartSection(item.key)"
+      >
+        <span [class]="item.icon"></span>
+        <small>{{ item.label }}</small>
+      </button>
+    }
+  </nav>
+</main>
+
+<p-dialog
+  [(visible)]="profileEditorVisible"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(92vw, 560px)' }"
+  header="Editar perfil"
+>
+  <form class="smart-form" (ngSubmit)="saveProfile()">
+    <label>
+      <span>Nombre completo</span>
+      <input pInputText name="full_name" [(ngModel)]="profileForm.full_name" />
+    </label>
+    <label>
+      <span>Username</span>
+      <input pInputText name="username" [(ngModel)]="profileForm.username" />
+    </label>
+    <label>
+      <span>Correo</span>
+      <input pInputText type="email" name="email" [(ngModel)]="profileForm.email" />
+    </label>
+    <label>
+      <span>Telefono</span>
+      <input pInputText name="phone" [(ngModel)]="profileForm.phone" />
+    </label>
+    <label class="full-field">
+      <span>Nueva contrasena</span>
+      <input pInputText type="password" name="password" [(ngModel)]="profileForm.password" />
+    </label>
+
+    @if (profileError) {
+      <div class="inline-status danger full-field">
+        <span class="pi pi-exclamation-circle"></span>
+        <p>{{ profileError }}</p>
+      </div>
+    }
+
+    <div class="dialog-actions full-field">
+      <p-button label="Cancelar" [text]="true" severity="secondary" (click)="profileEditorVisible = false" />
+      <p-button label="Guardar" icon="pi pi-check" [loading]="profileSaving" (click)="saveProfile()" />
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [visible]="selectedDevice() !== null"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: 'min(92vw, 480px)' }"
+  header="Detalle del dispositivo"
+  (visibleChange)="closeDeviceDetails()"
+>
+  @if (selectedDevice(); as device) {
+    <div class="device-detail">
+      <span [class]="device.icon"></span>
+      <h2>{{ device.title }}</h2>
+      <p>{{ device.subtitle }}</p>
+      <div>
+        <strong>Estado</strong>
+        <span>{{ device.status }}</span>
+      </div>
+      <div>
+        <strong>Modo / detalle</strong>
+        <span>{{ device.detail }}</span>
+      </div>
+      <div>
+        <strong>Categoria</strong>
+        <span>{{ device.category }}</span>
+      </div>
+      <div class="device-actions">
+        <button type="button" [disabled]="!device.canToggle" (click)="toggleDevice(device)">ON/OFF</button>
+        <button type="button" (click)="restartDevice(device)">Reiniciar</button>
+      </div>
+    </div>
+  }
+</p-dialog>
+}

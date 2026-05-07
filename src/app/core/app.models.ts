@@ -19,16 +19,6 @@ export interface LoginPayload {
   password: string;
 }
 
-export interface RegisterPayload {
-  home: number;
-  full_name: string;
-  username: string;
-  email: string;
-  password: string;
-  phone?: string;
-  role: string;
-}
-
 export interface AuthResponse {
   token: string;
   user: AppUser;
@@ -42,6 +32,7 @@ export interface EndpointDefinition {
   icon: string;
   accent: string;
   description: string;
+  allowedRoles: string[];
 }
 
 export interface EndpointState {
