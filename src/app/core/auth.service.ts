@@ -51,6 +51,21 @@ export class AuthService {
       .pipe(tap((user) => this.updateUser(user)));
   }
 
+  requestRecovery(identifier: string): Observable<{ token: string; note: string }> {
+    const payload = identifier.includes('@') ? { email: identifier } : { username: identifier };
+    return this.http.post<{ token: string; note: string }>(
+      `${API_BASE_URL}/users/users/request-recovery/`,
+      payload,
+    );
+  }
+
+  resetPassword(token: string, password: string): Observable<{ detail: string }> {
+    return this.http.post<{ detail: string }>(
+      `${API_BASE_URL}/users/users/reset-password/`,
+      { token, password },
+    );
+  }
+
   private storeSession(response: AuthResponse): void {
     localStorage.setItem(TOKEN_KEY, response.token);
     localStorage.setItem(USER_KEY, JSON.stringify(response.user));
