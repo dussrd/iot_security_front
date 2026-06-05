@@ -1,8 +1,6 @@
 <main class="login-shell">
   <section class="brand-panel" aria-label="Estado de plataforma">
-    <div class="brand-mark">
-      <span class="pi pi-shield"></span>
-    </div>
+    <div class="brand-mark"><span class="pi pi-shield"></span></div>
 
     <div class="brand-text">
       <p class="eyebrow">IoT Security Console</p>
@@ -11,49 +9,35 @@
 
     <div class="signal-grid" aria-hidden="true">
       <div class="signal-cell is-live">
-        <span class="pi pi-wifi"></span>
-        <strong>18</strong>
-        <small>Nodos</small>
+        <span class="pi pi-wifi"></span><strong>18</strong><small>Nodos</small>
       </div>
       <div class="signal-cell">
-        <span class="pi pi-chart-line"></span>
-        <strong>342</strong>
-        <small>Lecturas</small>
+        <span class="pi pi-chart-line"></span><strong>342</strong><small>Lecturas</small>
       </div>
       <div class="signal-cell is-warning">
-        <span class="pi pi-bell"></span>
-        <strong>7</strong>
-        <small>Alertas</small>
+        <span class="pi pi-bell"></span><strong>7</strong><small>Alertas</small>
       </div>
       <div class="signal-cell">
-        <span class="pi pi-key"></span>
-        <strong>RBAC</strong>
-        <small>Roles</small>
+        <span class="pi pi-key"></span><strong>RBAC</strong><small>Roles</small>
       </div>
     </div>
 
     <div class="access-rule">
       <span class="pi pi-lock"></span>
-      <div>
-        <strong>Admin</strong>
-        <span>GET, POST, PUT, PATCH, DELETE</span>
-      </div>
-      <div>
-        <strong>Otros roles</strong>
-        <span>Solo lectura</span>
-      </div>
+      <div><strong>Admin</strong><span>GET, POST, PUT, PATCH, DELETE</span></div>
+      <div><strong>Otros roles</strong><span>Solo lectura</span></div>
     </div>
   </section>
 
   <section class="auth-panel">
     <div class="auth-card">
 
-      <!-- ── Paso 1: Login ───────────────────── -->
-      @if (recoveryStep() === 'login') {
+      <!-- ════════════════════════════════════ -->
+      <!-- PASO: LOGIN                          -->
+      <!-- ════════════════════════════════════ -->
+      @if (step() === 'login') {
         <div class="form-heading">
-          <div class="form-icon-wrap">
-            <span class="pi pi-sign-in"></span>
-          </div>
+          <div class="form-icon-wrap"><span class="pi pi-sign-in"></span></div>
           <div>
             <h2>Acceso IoT Security</h2>
             <p>Autenticacion por token Bearer</p>
@@ -61,232 +45,256 @@
         </div>
 
         @if (error()) {
-          <div class="alert">
-            <span class="pi pi-exclamation-circle"></span>
-            <p>{{ error() }}</p>
-          </div>
+          <div class="alert"><span class="pi pi-exclamation-circle"></span><p>{{ error() }}</p></div>
         }
 
-        <form (ngSubmit)="submit()" [formGroup]="loginForm">
+        <form (ngSubmit)="login()" [formGroup]="loginForm">
           <label>
             <span>Usuario o correo</span>
-            <input
-              pInputText
-              type="text"
-              formControlName="identifier"
-              autocomplete="username"
-              placeholder="admin o admin@ejemplo.com"
-            />
+            <input pInputText type="text" formControlName="identifier"
+                   autocomplete="username" placeholder="admin o admin@ejemplo.com" />
           </label>
-
           <label>
             <span>Contraseña</span>
-            <p-password
-              formControlName="password"
-              [toggleMask]="true"
-              [feedback]="false"
-              class="w-full"
-              inputClass="w-full"
-              autocomplete="current-password"
-            />
+            <p-password formControlName="password" [toggleMask]="true" [feedback]="false"
+                        class="w-full" inputClass="w-full" autocomplete="current-password" />
           </label>
 
           <div class="forgot-row">
-            <button type="button" class="forgot-link" (click)="openRecovery()">
+            <button type="button" class="forgot-link" (click)="goTo('request')">
               ¿Olvidaste tu contraseña?
             </button>
           </div>
 
-          <p-button
-            type="submit"
-            label="Iniciar sesion"
-            icon="pi pi-arrow-right"
-            iconPos="right"
-            [loading]="loading()"
-            class="w-full"
-          />
+          <p-button type="submit" label="Iniciar sesion" icon="pi pi-arrow-right"
+                    iconPos="right" [loading]="loading()" class="w-full" />
         </form>
+
+        <div class="auth-divider"><span>¿No tienes cuenta?</span></div>
+        <button type="button" class="register-btn" (click)="goTo('register')">
+          <span class="pi pi-user-plus"></span> Crear cuenta nueva
+        </button>
       }
 
-      <!-- ── Paso 2: Solicitar token ─────────── -->
-      @if (recoveryStep() === 'request') {
+      <!-- ════════════════════════════════════ -->
+      <!-- PASO: REGISTRO                       -->
+      <!-- ════════════════════════════════════ -->
+      @if (step() === 'register') {
         <div class="form-heading">
-          <div class="form-icon-wrap amber">
-            <span class="pi pi-key"></span>
+          <div class="form-icon-wrap amber"><span class="pi pi-user-plus"></span></div>
+          <div>
+            <h2>Crear cuenta</h2>
+            <p>Completa tus datos para registrarte</p>
           </div>
+        </div>
+
+        @if (error()) {
+          <div class="alert"><span class="pi pi-exclamation-circle"></span><p>{{ error() }}</p></div>
+        }
+
+        <form (ngSubmit)="submitRegister()" [formGroup]="registerForm" class="register-form">
+          <label [class.field-error]="fieldError('full_name')">
+            <span>Nombre completo</span>
+            <input pInputText formControlName="full_name" placeholder="Juan Perez" />
+            @if (fieldError('full_name')) { <small>{{ fieldError('full_name') }}</small> }
+          </label>
+
+          <label [class.field-error]="fieldError('username')">
+            <span>Username</span>
+            <input pInputText formControlName="username" placeholder="juanperez" />
+            @if (fieldError('username')) { <small>{{ fieldError('username') }}</small> }
+          </label>
+
+          <label class="full-field" [class.field-error]="fieldError('email')">
+            <span>Correo electrónico</span>
+            <input pInputText type="email" formControlName="email" placeholder="juan@correo.com" />
+            @if (fieldError('email')) { <small>{{ fieldError('email') }}</small> }
+          </label>
+
+          <label [class.field-error]="fieldError('password')">
+            <span>Contraseña</span>
+            <p-password formControlName="password" [toggleMask]="true" [feedback]="false"
+                        class="w-full" inputClass="w-full" placeholder="Min. 6 caracteres" />
+            @if (fieldError('password')) { <small>{{ fieldError('password') }}</small> }
+          </label>
+
+          <label>
+            <span>Confirmar contraseña</span>
+            <p-password formControlName="confirmPassword" [toggleMask]="true" [feedback]="false"
+                        class="w-full" inputClass="w-full" placeholder="Repite la contraseña" />
+          </label>
+
+          <div class="full-field info-note" style="margin-bottom:0;">
+            <span class="pi pi-info-circle"></span>
+            <p>Se te asignará el rol <strong>Lector</strong>. Un administrador puede actualizarlo.</p>
+          </div>
+
+          <p-button type="submit" label="Crear cuenta y verificar correo"
+                    icon="pi pi-envelope" [loading]="loading()" class="w-full full-field" />
+        </form>
+
+        <button type="button" class="back-link" (click)="goTo('login')">
+          <span class="pi pi-arrow-left"></span> Ya tengo cuenta
+        </button>
+      }
+
+      <!-- ════════════════════════════════════ -->
+      <!-- PASO: VERIFICAR EMAIL                -->
+      <!-- ════════════════════════════════════ -->
+      @if (step() === 'verify-email') {
+        <div class="form-heading">
+          <div class="form-icon-wrap green"><span class="pi pi-envelope"></span></div>
+          <div>
+            <h2>Verifica tu correo</h2>
+            <p>Ingresa el codigo que te enviamos</p>
+          </div>
+        </div>
+
+        @if (devToken()) {
+          <div class="dev-token-box">
+            <div class="dev-token-label">
+              <span class="pi pi-code"></span> Modo desarrollo — copia este token
+            </div>
+            <div class="dev-token-value" (click)="verifyForm.patchValue({token: devToken()!})">
+              {{ devToken() }}
+            </div>
+            <small>Haz clic en el token para pegarlo automaticamente en el campo</small>
+          </div>
+        } @else {
+          <div class="info-note">
+            <span class="pi pi-info-circle"></span>
+            <p>Revisa tu bandeja de entrada. Te enviamos un correo con el codigo y un enlace directo.</p>
+          </div>
+        }
+
+        @if (error()) {
+          <div class="alert"><span class="pi pi-exclamation-circle"></span><p>{{ error() }}</p></div>
+        }
+
+        <form (ngSubmit)="submitVerify()" [formGroup]="verifyForm">
+          <label>
+            <span>Codigo de verificacion</span>
+            <input pInputText formControlName="token" placeholder="Pega el codigo del correo" />
+          </label>
+          <p-button type="submit" label="Verificar cuenta" icon="pi pi-check"
+                    [loading]="loading()" class="w-full" />
+        </form>
+
+        <button type="button" class="back-link" (click)="goTo('register')">
+          <span class="pi pi-arrow-left"></span> Volver al registro
+        </button>
+      }
+
+      <!-- ════════════════════════════════════ -->
+      <!-- PASO: RECUPERAR — solicitar          -->
+      <!-- ════════════════════════════════════ -->
+      @if (step() === 'request') {
+        <div class="form-heading">
+          <div class="form-icon-wrap amber"><span class="pi pi-key"></span></div>
           <div>
             <h2>Recuperar contraseña</h2>
-            <p>Introduce tu usuario o correo registrado</p>
+            <p>Te enviaremos un correo con instrucciones</p>
           </div>
         </div>
 
-        <div class="info-note">
-          <span class="pi pi-info-circle"></span>
-          <p>
-            El sistema generará un token de recuperación. En un entorno real este token
-            se enviaría al correo registrado; aquí se mostrará en pantalla.
-          </p>
-        </div>
-
-        @if (recoveryError()) {
-          <div class="alert">
-            <span class="pi pi-exclamation-circle"></span>
-            <p>{{ recoveryError() }}</p>
-          </div>
+        @if (error()) {
+          <div class="alert"><span class="pi pi-exclamation-circle"></span><p>{{ error() }}</p></div>
         }
 
         <form (ngSubmit)="requestRecovery()" [formGroup]="requestForm">
           <label>
             <span>Usuario o correo</span>
-            <input
-              pInputText
-              type="text"
-              formControlName="identifier"
-              placeholder="admin o admin@ejemplo.com"
-            />
+            <input pInputText formControlName="identifier" placeholder="admin o admin@ejemplo.com" />
           </label>
-
-          <p-button
-            type="submit"
-            label="Generar token"
-            icon="pi pi-key"
-            [loading]="recoveryLoading()"
-            class="w-full"
-          />
+          <p-button type="submit" label="Enviar correo de recuperacion"
+                    icon="pi pi-send" [loading]="loading()" class="w-full" />
         </form>
 
-        <button type="button" class="back-link" (click)="backToLogin()">
+        <button type="button" class="back-link" (click)="goTo('login')">
           <span class="pi pi-arrow-left"></span> Volver al inicio de sesion
         </button>
       }
 
-      <!-- ── Paso 3: Mostrar token ───────────── -->
-      @if (recoveryStep() === 'token-shown') {
+      <!-- ════════════════════════════════════ -->
+      <!-- PASO: RECUPERAR — nueva contraseña   -->
+      <!-- ════════════════════════════════════ -->
+      @if (step() === 'reset') {
         <div class="form-heading">
-          <div class="form-icon-wrap green">
-            <span class="pi pi-check-circle"></span>
-          </div>
+          <div class="form-icon-wrap green"><span class="pi pi-envelope"></span></div>
           <div>
-            <h2>Token generado</h2>
-            <p>Copia el token y usalo para restablecer tu contraseña</p>
+            <h2>Revisa tu correo</h2>
+            <p>Ingresa el codigo y tu nueva contraseña</p>
           </div>
         </div>
 
-        <div class="token-box">
-          <div class="token-label">
-            <span class="pi pi-lock-open"></span>
-            Token de recuperacion
+        @if (devToken()) {
+          <div class="dev-token-box">
+            <div class="dev-token-label">
+              <span class="pi pi-code"></span> Modo desarrollo — copia este token
+            </div>
+            <div class="dev-token-value" (click)="resetForm.patchValue({token: devToken()!})">
+              {{ devToken() }}
+            </div>
+            <small>Haz clic en el token para pegarlo automaticamente en el campo</small>
           </div>
-          <div class="token-value">{{ recoveryToken() }}</div>
-          <button type="button" class="token-copy-btn" (click)="copyToken()">
-            <span [class]="tokenCopied() ? 'pi pi-check' : 'pi pi-copy'"></span>
-            {{ tokenCopied() ? 'Copiado' : 'Copiar' }}
-          </button>
-        </div>
-
-        <div class="info-note warning">
-          <span class="pi pi-exclamation-triangle"></span>
-          <p>
-            <strong>Guarda este token ahora.</strong> Es de un solo uso y no se puede
-            recuperar si lo pierdes. En producción llegaría por correo electrónico.
-          </p>
-        </div>
-
-        <p-button
-          label="Continuar y restablecer contraseña"
-          icon="pi pi-arrow-right"
-          iconPos="right"
-          (click)="goToReset()"
-          class="w-full"
-        />
-
-        <button type="button" class="back-link" (click)="backToLogin()">
-          <span class="pi pi-arrow-left"></span> Volver al inicio de sesion
-        </button>
-      }
-
-      <!-- ── Paso 4: Nueva contraseña ────────── -->
-      @if (recoveryStep() === 'reset') {
-        <div class="form-heading">
-          <div class="form-icon-wrap">
-            <span class="pi pi-lock"></span>
+        } @else {
+          <div class="info-note">
+            <span class="pi pi-info-circle"></span>
+            <p>Si el correo está registrado, encontrarás un email de <strong>SmartHome IoT</strong> con el codigo.</p>
           </div>
-          <div>
-            <h2>Nueva contraseña</h2>
-            <p>Usa el token para establecer tu nueva contraseña</p>
-          </div>
-        </div>
+        }
 
-        @if (recoveryError()) {
-          <div class="alert">
-            <span class="pi pi-exclamation-circle"></span>
-            <p>{{ recoveryError() }}</p>
-          </div>
+        @if (error()) {
+          <div class="alert"><span class="pi pi-exclamation-circle"></span><p>{{ error() }}</p></div>
         }
 
         <form (ngSubmit)="resetPassword()" [formGroup]="resetForm">
           <label>
-            <span>Token de recuperacion</span>
-            <input
-              pInputText
-              type="text"
-              formControlName="token"
-              placeholder="Pega el token aqui"
-            />
+            <span>Codigo recibido por correo</span>
+            <input pInputText formControlName="token" placeholder="Pega el codigo aqui" />
           </label>
-
           <label>
             <span>Nueva contraseña</span>
-            <p-password
-              formControlName="password"
-              [toggleMask]="true"
-              [feedback]="false"
-              class="w-full"
-              inputClass="w-full"
-              placeholder="Minimo 6 caracteres"
-            />
+            <p-password formControlName="password" [toggleMask]="true" [feedback]="false"
+                        class="w-full" inputClass="w-full" placeholder="Min. 6 caracteres" />
           </label>
-
           <label>
             <span>Confirmar contraseña</span>
-            <p-password
-              formControlName="confirmPassword"
-              [toggleMask]="true"
-              [feedback]="false"
-              class="w-full"
-              inputClass="w-full"
-              placeholder="Repite la contraseña"
-            />
+            <p-password formControlName="confirmPassword" [toggleMask]="true" [feedback]="false"
+                        class="w-full" inputClass="w-full" />
           </label>
-
-          <p-button
-            type="submit"
-            label="Restablecer contraseña"
-            icon="pi pi-check"
-            [loading]="recoveryLoading()"
-            class="w-full"
-          />
+          <p-button type="submit" label="Restablecer contraseña" icon="pi pi-check"
+                    [loading]="loading()" class="w-full" />
         </form>
 
-        <button type="button" class="back-link" (click)="recoveryStep.set('token-shown')">
-          <span class="pi pi-arrow-left"></span> Ver token de nuevo
+        <button type="button" class="back-link" (click)="goTo('request')">
+          <span class="pi pi-arrow-left"></span> Reenviar correo
         </button>
       }
 
-      <!-- ── Paso 5: Éxito ───────────────────── -->
-      @if (recoveryStep() === 'done') {
+      <!-- ════════════════════════════════════ -->
+      <!-- PANTALLA: REGISTRO EXITOSO           -->
+      <!-- ════════════════════════════════════ -->
+      @if (step() === 'done-register') {
         <div class="success-card">
-          <div class="success-icon">
-            <span class="pi pi-check-circle"></span>
-          </div>
+          <div class="success-icon"><span class="pi pi-check-circle"></span></div>
+          <h2>¡Cuenta verificada!</h2>
+          <p>Tu cuenta fue activada correctamente. Ya puedes iniciar sesion.</p>
+          <p-button label="Iniciar sesion" icon="pi pi-sign-in"
+                    (click)="goTo('login')" class="w-full" />
+        </div>
+      }
+
+      <!-- ════════════════════════════════════ -->
+      <!-- PANTALLA: CONTRASEÑA RESTABLECIDA   -->
+      <!-- ════════════════════════════════════ -->
+      @if (step() === 'done-reset') {
+        <div class="success-card">
+          <div class="success-icon"><span class="pi pi-check-circle"></span></div>
           <h2>¡Contraseña actualizada!</h2>
           <p>Ya puedes iniciar sesion con tu nueva contraseña.</p>
-          <p-button
-            label="Ir al inicio de sesion"
-            icon="pi pi-sign-in"
-            (click)="backToLogin()"
-            class="w-full"
-          />
+          <p-button label="Iniciar sesion" icon="pi pi-sign-in"
+                    (click)="goTo('login')" class="w-full" />
         </div>
       }
 
