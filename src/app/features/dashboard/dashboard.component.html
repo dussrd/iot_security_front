@@ -98,7 +98,7 @@
                   class="map-pin"
                   [class]="zone.position"
                   [attr.data-tone]="zone.tone"
-                  (click)="selectAdminSection(zone.label === 'Entrada' ? 'cameras' : 'devices')"
+                  (click)="selectAdminSection('devices')"
                 >
                   <span [class]="zone.icon"></span>
                   <small>{{ zone.label }}</small>
@@ -181,35 +181,6 @@
                 <button type="button" (click)="openDeviceEditor(device)">Editar</button>
                 <button type="button" (click)="deleteDevice(device)">Eliminar</button>
                 <button type="button" (click)="runAdminAction('Actualizar firmware de ' + device.title)">Firmware</button>
-              </div>
-            </article>
-          }
-        </section>
-      }
-
-      @case ('cameras') {
-        <section class="admin-section-head">
-          <div>
-            <h2>Camaras</h2>
-            <p>Centro de videovigilancia avanzada</p>
-          </div>
-          <div class="admin-tabs"><span>En vivo</span><span>Grabaciones</span><span>Snapshots</span></div>
-        </section>
-        <section class="admin-camera-grid">
-          @for (camera of cameraCards; track camera.name) {
-            <article class="admin-camera-card" [attr.data-tone]="camera.tone">
-              <div class="camera-frame compact-camera">
-                <span class="camera-badge">{{ camera.name }} · {{ camera.status }}</span>
-              </div>
-              <div>
-                <strong>{{ camera.name }}</strong>
-                <p>{{ camera.detail }} · Senal 92% · 64GB libres</p>
-              </div>
-              <div class="camera-controls">
-                <button type="button" (click)="runAdminAction('Grabar ' + camera.name)"><span class="pi pi-circle-fill"></span></button>
-                <button type="button" (click)="runAdminAction('Captura ' + camera.name)"><span class="pi pi-camera"></span></button>
-                <button type="button" (click)="runAdminAction('Descargar video')"><span class="pi pi-download"></span></button>
-                <button type="button" (click)="runAdminAction('Pantalla completa')"><span class="pi pi-window-maximize"></span></button>
               </div>
             </article>
           }
@@ -397,7 +368,6 @@
                 <small>{{ alert.zone }} · {{ alert.time ? (alert.time | date: 'short') : 'Sin fecha' }}</small>
               </div>
               <div class="alert-actions">
-                <button type="button" (click)="selectAdminSection('cameras')">Ver camara</button>
                 <button type="button" (click)="runAdminAction('Silenciar alarma')">Silenciar</button>
                 <button type="button" [disabled]="alert.resolved" (click)="markAlertRead(alert)">Resolver</button>
               </div>
@@ -697,7 +667,7 @@
                   [class]="item.position"
                   [attr.data-tone]="item.tone"
                   [class.inactive]="!item.active"
-                  (click)="selectSmartSection(item.label === 'Entrada' ? 'cameras' : 'devices')"
+                  (click)="selectSmartSection('devices')"
                 >
                   <span [class]="item.icon"></span>
                   <small>{{ item.label }}</small>
@@ -769,11 +739,6 @@
                 <strong>Encender luces</strong>
                 <small>Manual</small>
               </button>
-              <button type="button" (click)="selectSmartSection('cameras')">
-                <span class="pi pi-video"></span>
-                <strong>Ver camaras</strong>
-                <small>En vivo</small>
-              </button>
               <button type="button" (click)="runSmartAction('Activar modo noche')">
                 <span class="pi pi-moon"></span>
                 <strong>Modo noche</strong>
@@ -842,51 +807,6 @@
         </section>
       }
 
-      @case ('cameras') {
-        <section class="camera-layout">
-          <article class="camera-live">
-            <div class="panel-heading">
-              <div>
-                <h2>Vista en vivo</h2>
-                <p>Patio, entrada y garaje</p>
-              </div>
-              <span>IA activa</span>
-            </div>
-            <div class="camera-frame">
-              <span class="camera-badge">Patio delantero · En linea</span>
-            </div>
-            <div class="camera-controls">
-              <button type="button" (click)="runSmartAction('Captura de camara')">
-                <span class="pi pi-camera"></span>
-              </button>
-              <button type="button" (click)="runSmartAction('Grabacion de camara')">
-                <span class="pi pi-circle-fill"></span>
-              </button>
-              <button type="button" (click)="runSmartAction('Audio de camara')">
-                <span class="pi pi-volume-up"></span>
-              </button>
-              <button type="button" (click)="runSmartAction('Zoom de camara')">
-                <span class="pi pi-search-plus"></span>
-              </button>
-            </div>
-          </article>
-
-          <div class="camera-list">
-            @for (camera of cameraCards; track camera.name) {
-              <article class="camera-card" [attr.data-tone]="camera.tone">
-                <span class="pi pi-video"></span>
-                <div>
-                  <strong>{{ camera.name }}</strong>
-                  <p>{{ camera.location }}</p>
-                  <small>{{ camera.detail }}</small>
-                </div>
-                <em>{{ camera.status }}</em>
-              </article>
-            }
-          </div>
-        </section>
-      }
-
       @case ('automations') {
         <section class="automation-grid">
           @for (rule of smartAutomations(); track rule.title) {
@@ -912,7 +832,7 @@
         <section class="smart-section-head">
           <div>
             <h2>Historial de eventos</h2>
-            <p>Registro de seguridad, iluminacion, camaras y automatizaciones</p>
+            <p>Registro de seguridad, iluminacion y automatizaciones</p>
           </div>
           <div class="smart-filters">
             <button type="button" [class.active]="historyFilter() === 'all'" (click)="selectHistoryFilter('all')">
@@ -1163,7 +1083,6 @@
                 <small>{{ alert.zone }} · {{ alert.time ? (alert.time | date: 'short') : 'Sin fecha' }}</small>
               </div>
               <div class="alert-actions">
-                <button type="button" (click)="selectSmartSection('cameras')">Ver camara</button>
                 <button type="button" [disabled]="alert.resolved" (click)="markAlertRead(alert)">
                   {{ alert.resolved ? 'Leida' : 'Marcar leida' }}
                 </button>

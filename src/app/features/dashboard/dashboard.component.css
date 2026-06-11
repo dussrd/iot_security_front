@@ -718,7 +718,6 @@ textarea.code-input {
 
 .admin-summary-grid,
 .admin-home-grid,
-.admin-camera-grid,
 .admin-device-list,
 .admin-user-list,
 .admin-system-grid,
@@ -736,7 +735,6 @@ textarea.code-input {
 .admin-summary-card,
 .admin-panel,
 .admin-device-row,
-.admin-camera-card,
 .admin-user-card,
 .admin-system-card {
   border: 1px solid rgba(148, 163, 184, 0.14);
@@ -906,20 +904,6 @@ textarea.code-input {
   color: white;
 }
 
-.admin-camera-grid {
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-}
-
-.admin-camera-card {
-  display: grid;
-  gap: 0.8rem;
-  padding: 0.9rem;
-}
-
-.compact-camera {
-  min-height: 14rem;
-}
-
 .admin-history {
   margin-bottom: 1rem;
 }
@@ -1048,7 +1032,6 @@ textarea.code-input {
 .panel-heading,
 .smart-event,
 .device-card > div,
-.camera-card,
 .automation-card footer,
 .history-row,
 .scene-card,
@@ -1083,8 +1066,6 @@ textarea.code-input {
 .smart-event p,
 .device-card p,
 .device-card small,
-.camera-card p,
-.camera-card small,
 .automation-card p,
 .history-row p,
 .profile-card p,
@@ -1214,7 +1195,6 @@ textarea.code-input {
 .smart-home-grid,
 .smart-lower-grid,
 .device-grid,
-.camera-layout,
 .automation-grid,
 .profile-layout,
 .scene-grid {
@@ -1231,8 +1211,6 @@ textarea.code-input {
 .smart-panel,
 .smart-home-map,
 .quick-panel,
-.camera-live,
-.camera-card,
 .device-card,
 .automation-card,
 .history-panel,
@@ -1314,7 +1292,6 @@ textarea.code-input {
 .smart-summary-card[data-tone] div span,
 .smart-event[data-tone] > span,
 .device-card[data-tone] > div > span,
-.camera-card[data-tone] > span,
 .history-row[data-tone] > span,
 .scene-card[data-tone] > span,
 .emergency-card[data-tone] > span {
@@ -1334,7 +1311,6 @@ textarea.code-input {
 .smart-home-map,
 .smart-panel,
 .quick-panel,
-.camera-live,
 .history-panel,
 .profile-card,
 .profile-details {
@@ -1347,8 +1323,7 @@ textarea.code-input {
   margin-bottom: 1rem;
 }
 
-.panel-heading span,
-.camera-badge {
+.panel-heading span {
   border-radius: 999px;
   background: rgba(20, 184, 166, 0.18);
   padding: 0.35rem 0.65rem;
@@ -1411,7 +1386,6 @@ textarea.code-input {
 .smart-timeline,
 .quick-actions,
 .alert-breakdown,
-.camera-list,
 .settings-list,
 .alerts-layout {
   display: grid;
@@ -1426,8 +1400,7 @@ textarea.code-input {
 
 .smart-event > span,
 .history-row > span,
-.emergency-card > span,
-.camera-card > span {
+.emergency-card > span {
   display: grid;
   width: 2.5rem;
   height: 2.5rem;
@@ -1617,58 +1590,6 @@ textarea.code-input {
 .smart-empty span {
   color: #60a5fa;
   font-size: 2rem;
-}
-
-.camera-layout {
-  grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
-}
-
-.camera-frame {
-  position: relative;
-  min-height: 28rem;
-  overflow: hidden;
-  border-radius: 0.9rem;
-  background:
-    linear-gradient(180deg, rgba(2, 8, 23, 0.08), rgba(2, 8, 23, 0.42)),
-    url('https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1200&q=80')
-      center / cover;
-  filter: grayscale(0.2);
-}
-
-.camera-badge {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-}
-
-.camera-controls {
-  display: flex;
-  justify-content: center;
-  gap: 0.7rem;
-  margin-top: 1rem;
-}
-
-.camera-controls button {
-  display: grid;
-  width: 3rem;
-  height: 3rem;
-  place-items: center;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 50%;
-  background: rgba(30, 41, 59, 0.82);
-  color: #cbd5e1;
-}
-
-.camera-card {
-  gap: 0.8rem;
-  padding: 0.9rem;
-}
-
-.camera-card em {
-  margin-left: auto;
-  color: var(--tone);
-  font-style: normal;
-  font-weight: 900;
 }
 
 .automation-grid {
@@ -2006,7 +1927,6 @@ textarea.code-input {
   .smart-shell,
   .smart-home-grid,
   .smart-lower-grid,
-  .camera-layout,
   .profile-layout,
   .settings-layout {
     grid-template-columns: 1fr;
@@ -2076,8 +1996,7 @@ textarea.code-input {
     grid-template-columns: 1fr;
   }
 
-  .house-visual,
-  .camera-frame {
+  .house-visual {
     min-height: 20rem;
   }
 
@@ -2241,7 +2160,6 @@ textarea.code-input {
     grid-template-columns: 1fr 1fr;
   }
 
-  .admin-camera-grid,
   .scene-grid,
   .admin-home-grid {
     grid-template-columns: 1fr;

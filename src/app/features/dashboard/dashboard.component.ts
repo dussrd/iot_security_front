@@ -21,7 +21,6 @@ type EditorMode = 'create' | 'edit';
 type SmartSection =
   | 'home'
   | 'devices'
-  | 'cameras'
   | 'automations'
   | 'history'
   | 'profile'
@@ -31,7 +30,6 @@ type SmartSection =
 type AdminSection =
   | 'home'
   | 'devices'
-  | 'cameras'
   | 'automations'
   | 'history'
   | 'profile'
@@ -151,7 +149,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly adminMenu: AdminMenuItem[] = [
     { key: 'home', label: 'Inicio', icon: 'pi pi-home' },
     { key: 'devices', label: 'Dispositivos', icon: 'pi pi-microchip' },
-    { key: 'cameras', label: 'Camaras', icon: 'pi pi-video' },
     { key: 'automations', label: 'Automatizaciones', icon: 'pi pi-sync' },
     { key: 'scenes', label: 'Escenas', icon: 'pi pi-sparkles' },
     { key: 'history', label: 'Historial', icon: 'pi pi-clock' },
@@ -195,36 +192,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly smartMenu: SmartMenuItem[] = [
     { key: 'home', label: 'Inicio', icon: 'pi pi-home', roles: ['lector', 'operador'] },
     { key: 'devices', label: 'Dispositivos', icon: 'pi pi-microchip', roles: ['lector', 'operador'] },
-    { key: 'cameras', label: 'Camaras', icon: 'pi pi-video', roles: ['lector', 'operador'] },
     { key: 'automations', label: 'Automatizaciones', icon: 'pi pi-sync', roles: ['operador'] },
     { key: 'history', label: 'Historial', icon: 'pi pi-clock', roles: ['lector', 'operador'] },
     { key: 'scenes', label: 'Escenas', icon: 'pi pi-sparkles', roles: ['operador'] },
     { key: 'alerts', label: 'Alertas', icon: 'pi pi-exclamation-triangle', roles: ['lector', 'operador'] },
     { key: 'settings', label: 'Configuracion', icon: 'pi pi-cog', roles: ['lector', 'operador'] },
     { key: 'profile', label: 'Perfil', icon: 'pi pi-user', roles: ['lector', 'operador'] },
-  ];
-  readonly cameraCards = [
-    {
-      name: 'Patio delantero',
-      location: 'Exterior',
-      status: 'En linea',
-      tone: 'green',
-      detail: 'Deteccion activa',
-    },
-    {
-      name: 'Entrada principal',
-      location: 'Acceso',
-      status: 'En linea',
-      tone: 'green',
-      detail: 'Grabacion continua',
-    },
-    {
-      name: 'Garaje',
-      location: 'Perimetro',
-      status: 'Sin conexion',
-      tone: 'red',
-      detail: 'Ultima senal hace 18 min',
-    },
   ];
   readonly sceneCards = [
     {
@@ -1609,6 +1582,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
   }
 
+  private latestSensorReading(sensorId: unknown): ApiRecord | null {
+    const readings = this.recordsFor('sensor-readings').filter(
+      (reading) => String(reading['sensor']) === String(sensorId),
+    );
+
+    return this.latestByTime(readings);
+  }
+
   private buildDeviceCards(): SmartDeviceCard[] {
     const actuatorCards = this.recordsFor('actuators').map((actuator) => {
       const id = this.recordId(actuator);
@@ -1629,20 +1610,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
         canToggle: category === 'lighting' || category === 'security' || category === 'other',
       };
     });
-    const sensorCards = this.recordsFor('sensors').map((sensor) => ({
-      id: this.recordId(sensor),
-      source: 'sensors',
-      title: this.displayValue(sensor['sensor_name'] || 'Sensor'),
-      subtitle: this.displayValue(sensor['sensor_type'] || 'Sensor IoT'),
-      icon: this.deviceIcon(sensor['sensor_type']),
-      tone: this.truthy(sensor['is_active']) ? 'green' : 'slate',
-      status: this.truthy(sensor['is_active']) ? 'Activo' : 'Inactivo',
-      statusValue: this.truthy(sensor['is_active']) ? 'on' : 'off',
-      detail: sensor['measurement_unit'] ? `Unidad ${this.displayValue(sensor['measurement_unit'])}` : 'Monitoreo',
-      online: this.truthy(sensor['is_active']),
-      category: this.deviceCategory(sensor['sensor_type']),
-      canToggle: false,
-    }));
+    const sensorCards = this.recordsFor('sensors').map((sensor) => {
+      const sensorId = this.recordId(sensor);
+      const sensorType = String(sensor['sensor_type'] ?? '').toUpperCase();
+      const reading = this.latestSensorReading(sensorId);
+      const isActive = this.truthy(sensor['is_active']);
+
+      let status = isActive ? 'Activo' : 'Inactivo';
+      let statusValue = isActive ? 'on' : 'off';
+      let tone = isActive ? 'green' : 'slate';
+      let detail = sensor['measurement_unit'] ? `Unidad ${this.displayValue(sensor['measurement_unit'])}` : 'Monitoreo';
+
+      if (reading && isActive) {
+        if (sensorType === 'PIR') {
+          const detected = String(reading['text_value'] ?? '') === 'movimiento_detectado';
+          status = detected ? 'Movimiento detectado' : 'Sin movimiento';
+          statusValue = detected ? 'on' : 'off';
+          tone = detected ? 'amber' : 'green';
+        } else if (sensorType === 'LDR') {
+          const dark = String(reading['text_value'] ?? '') === 'oscuro';
+          status = dark ? 'Oscuro' : 'Con luz';
+          statusValue = dark ? 'on' : 'off';
+          tone = dark ? 'violet' : 'yellow';
+        }
+
+        const time = this.pickTime(reading);
+        detail = time ? `Ultima lectura ${this.elapsedFrom(time)}` : detail;
+      }
+
+      return {
+        id: sensorId,
+        source: 'sensors',
+        title: this.displayValue(sensor['sensor_name'] || 'Sensor'),
+        subtitle: this.displayValue(sensor['sensor_type'] || 'Sensor IoT'),
+        icon: this.deviceIcon(sensor['sensor_type']),
+        tone,
+        status,
+        statusValue,
+        detail,
+        online: isActive,
+        category: this.deviceCategory(sensor['sensor_type']),
+        canToggle: false,
+      };
+    });
     const nodeCards = this.recordsFor('nodes').map((node) => ({
       id: this.recordId(node),
       source: 'nodes',
@@ -1918,16 +1928,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         zone: 'Patio',
         resolved: this.localAlertStates()['local-light'] ?? true,
       },
-      {
-        id: 'local-camera',
-        title: 'Camara desconectada',
-        detail: 'Garaje',
-        icon: 'pi pi-video',
-        tone: 'red',
-        time: new Date(Date.now() - 900000).toISOString(),
-        zone: 'Garaje',
-        resolved: this.localAlertStates()['local-camera'] ?? false,
-      },
     ];
   }
 
@@ -1967,10 +1967,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     if (text.includes('pir') || text.includes('motion')) {
       return 'pi pi-directions-run';
-    }
-
-    if (text.includes('camera')) {
-      return 'pi pi-video';
     }
 
     if (text.includes('buzzer') || text.includes('alarm')) {
