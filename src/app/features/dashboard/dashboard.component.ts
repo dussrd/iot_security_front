@@ -142,6 +142,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pendingDelete: ApiRecord | null = null;
   readonly apiReadonlyResources = new Set<string>();
   private clockId: number | null = null;
+  private refreshId: number | null = null;
 
   readonly adminSection = signal<AdminSection>('home');
   readonly systemSelectedKey = signal<string | null>(null);
@@ -543,12 +544,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.clockId = window.setInterval(() => this.currentTime.set(new Date()), 60000);
+    this.refreshId = window.setInterval(() => this.refreshAllSilently(), 5000);
     this.loadAll();
   }
 
   ngOnDestroy(): void {
     if (this.clockId) {
       window.clearInterval(this.clockId);
+    }
+
+    if (this.refreshId) {
+      window.clearInterval(this.refreshId);
     }
   }
 
@@ -606,6 +612,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         this.states.set(nextState);
       });
+  }
+
+  private refreshAllSilently(): void {
+    if (this.loadingAll() || this.editingRecord || this.pendingDelete) {
+      return;
+    }
+
+    const visibleEndpoints = this.visibleEndpoints();
+
+    if (!visibleEndpoints.length) {
+      return;
+    }
+
+    forkJoin(
+      visibleEndpoints.map((endpoint) =>
+        this.api.list(endpoint).pipe(
+          map((records) => ({ endpoint, records, error: null as string | null })),
+          catchError((error) =>
+            of({
+              endpoint,
+              records: null as ApiRecord[] | null,
+              error: this.extractError(error),
+            }),
+          ),
+        ),
+      ),
+    ).subscribe((responses) => {
+      const nextState = { ...this.states() };
+
+      for (const response of responses) {
+        if (response.records === null) {
+          continue;
+        }
+
+        nextState[response.endpoint.key] = {
+          ...nextState[response.endpoint.key],
+          records: response.records,
+          error: null,
+        };
+      }
+
+      this.states.set(nextState);
+    });
   }
 
   refreshSelected(): void {
