@@ -1667,95 +1667,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       category: 'other' as DeviceFilter,
       canToggle: false,
     }));
-    const cards = [...actuatorCards, ...sensorCards, ...nodeCards];
-
-    if (cards.length) {
-      const hasLdrSensor = this.recordsFor('sensors').some(
-        (s) => String(s['sensor_type']).toUpperCase() === 'LDR',
-      );
-
-      if (!hasLdrSensor) {
-        const ldrCard: SmartDeviceCard = {
-          id: 'local-ldr',
-          source: 'local',
-          title: 'Sensor LDR',
-          subtitle: 'Exterior',
-          icon: 'pi pi-sun',
-          tone: 'yellow',
-          status: 'Detectando luminosidad',
-          statusValue: 'on',
-          detail: 'Monitoreo de luz ambiente',
-          online: true,
-          category: 'lighting',
-          canToggle: false,
-        };
-        return [...cards, ldrCard].slice(0, 12);
-      }
-
-      return cards.slice(0, 12);
-    }
-
-    const localLightStatus = this.localDeviceStatuses()['local:local-light'] ?? 'on';
-    const localAlarmStatus = this.localDeviceStatuses()['local:local-alarm'] ?? 'off';
-
-    return [
-      {
-        id: 'local-light',
-        source: 'local',
-        title: 'Luz Exterior',
-        subtitle: 'Entrada principal',
-        icon: 'pi pi-lightbulb',
-        tone: localLightStatus === 'on' ? 'amber' : 'slate',
-        status: localLightStatus === 'on' ? 'Encendida' : 'Apagada',
-        statusValue: localLightStatus,
-        detail: 'Manual',
-        online: true,
-        category: 'lighting',
-        canToggle: true,
-      },
-      {
-        id: 'local-pir',
-        source: 'local',
-        title: 'Sensor PIR',
-        subtitle: 'Patio delantero',
-        icon: 'pi pi-directions-run',
-        tone: 'green',
-        status: 'Activo',
-        statusValue: 'on',
-        detail: 'Ultima deteccion reciente',
-        online: true,
-        category: 'security',
-        canToggle: false,
-      },
-      {
-        id: 'local-ldr',
-        source: 'local',
-        title: 'Sensor LDR',
-        subtitle: 'Exterior',
-        icon: 'pi pi-sun',
-        tone: 'yellow',
-        status: 'Detectando oscuridad',
-        statusValue: 'on',
-        detail: 'Luminosidad baja',
-        online: true,
-        category: 'lighting',
-        canToggle: false,
-      },
-      {
-        id: 'local-alarm',
-        source: 'local',
-        title: 'Alarma',
-        subtitle: 'Sistema principal',
-        icon: 'pi pi-shield',
-        tone: localAlarmStatus === 'on' ? 'red' : 'slate',
-        status: localAlarmStatus === 'on' ? 'Activada' : 'Desactivada',
-        statusValue: localAlarmStatus,
-        detail: 'Intensidad sonora normal',
-        online: true,
-        category: 'security',
-        canToggle: true,
-      },
-    ];
+    return [...actuatorCards, ...sensorCards, ...nodeCards].slice(0, 12);
   }
 
   private buildAutomations() {
@@ -1771,39 +1683,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       schedule: 'Ejecucion automatica',
     }));
 
-    if (rules.length) {
-      return rules;
-    }
-
-    return [
-      {
-        id: undefined,
-        title: 'Luz exterior automatica',
-        detail: 'Encender luz exterior cuando haya oscuridad y movimiento',
-        icon: 'pi pi-lightbulb',
-        active: this.localAutomationStates()['Luz exterior automatica'] ?? true,
-        priority: 'Alta',
-        schedule: 'Anochecer y amanecer',
-      },
-      {
-        id: undefined,
-        title: 'Modo noche',
-        detail: 'Activarse a las 11 PM y encender luces exteriores',
-        icon: 'pi pi-moon',
-        active: this.localAutomationStates()['Modo noche'] ?? true,
-        priority: 'Media',
-        schedule: '11:00 PM',
-      },
-      {
-        id: undefined,
-        title: 'Activacion de alarma',
-        detail: 'Si hay movimiento entre 12 AM y 5 AM, activar alarma y notificar',
-        icon: 'pi pi-shield',
-        active: this.localAutomationStates()['Activacion de alarma'] ?? false,
-        priority: 'Critica',
-        schedule: '12:00 AM - 5:00 AM',
-      },
-    ];
+    return rules;
   }
 
   private buildHistory(): SmartHistoryEvent[] {
@@ -1855,37 +1735,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       })),
     ].sort((a, b) => (Date.parse(b.time ?? '') || 0) - (Date.parse(a.time ?? '') || 0));
 
-    const fallback = [
-      {
-        title: 'Movimiento detectado',
-        subtitle: 'Patio delantero',
-        icon: 'pi pi-directions-run',
-        tone: 'green',
-        time: new Date().toISOString(),
-        category: 'Seguridad',
-        categoryKey: 'devices' as HistoryFilter,
-      },
-      {
-        title: 'Luz exterior encendida',
-        subtitle: 'Automatico',
-        icon: 'pi pi-lightbulb',
-        tone: 'amber',
-        time: new Date(Date.now() - 120000).toISOString(),
-        category: 'Iluminacion',
-        categoryKey: 'devices' as HistoryFilter,
-      },
-      {
-        title: 'Modo noche activado',
-        subtitle: 'Automatico',
-        icon: 'pi pi-moon',
-        tone: 'blue',
-        time: new Date(Date.now() - 86400000).toISOString(),
-        category: 'Automatizaciones',
-        categoryKey: 'automations' as HistoryFilter,
-      },
-    ];
-
-    return (events.length ? events : fallback).slice(0, 12).map((event) => ({
+    return events.slice(0, 12).map((event) => ({
       ...event,
       group: this.eventGroup(event.time),
     }));
@@ -1903,32 +1753,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       resolved: this.localAlertStates()[String(this.recordId(alert))] ?? this.truthy(alert['is_resolved']),
     }));
 
-    if (alerts.length) {
-      return alerts;
-    }
-
-    return [
-      {
-        id: 'local-motion',
-        title: 'Movimiento detectado',
-        detail: 'Entrada principal',
-        icon: 'pi pi-directions-run',
-        tone: 'red',
-        time: new Date().toISOString(),
-        zone: 'Entrada',
-        resolved: this.localAlertStates()['local-motion'] ?? false,
-      },
-      {
-        id: 'local-light',
-        title: 'Luz exterior encendida',
-        detail: 'Automatico',
-        icon: 'pi pi-lightbulb',
-        tone: 'amber',
-        time: new Date(Date.now() - 120000).toISOString(),
-        zone: 'Patio',
-        resolved: this.localAlertStates()['local-light'] ?? true,
-      },
-    ];
+    return alerts;
   }
 
   private eventGroup(value: string | null): string {
