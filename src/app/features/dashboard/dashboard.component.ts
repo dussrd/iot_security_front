@@ -986,8 +986,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.currentRoles().includes('operador') && !this.auth.isAdmin()) {
-      this.smartNotice.set('Tu rol lector puede ver dispositivos, pero no cambiar su estado.');
+    if (!this.hasDeviceControlAccess()) {
+      this.smartNotice.set('Tu cuenta no tiene permisos para cambiar dispositivos.');
       return;
     }
 
@@ -1171,8 +1171,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   setAlarm(status: 'armed' | 'disarmed'): void {
-    if (!this.currentRoles().includes('operador') && !this.auth.isAdmin()) {
-      this.smartNotice.set('Tu rol lector no permite cambiar la alarma.');
+    if (!this.hasDeviceControlAccess()) {
+      this.smartNotice.set('Tu cuenta no tiene permisos para cambiar la alarma.');
       return;
     }
 
@@ -1959,5 +1959,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private currentRoles(): string[] {
     return this.auth.user()?.roles?.map((role) => role.toLowerCase()) ?? [];
+  }
+
+  private hasDeviceControlAccess(): boolean {
+    const roles = this.currentRoles();
+
+    return this.auth.isAdmin() || roles.includes('lector') || roles.includes('operador');
   }
 }
